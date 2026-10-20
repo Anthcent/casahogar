@@ -1,0 +1,13 @@
+node_modules/
+dist/
+.atl/
+.env
+.env.*
+!.env.example
+*.log
+.DS_Store
+Thumbs.db
+
+# Referencias visuales locales, ajenas al sitio publicado.
+/dd.jfif
+/ff.png
