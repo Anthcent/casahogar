@@ -476,14 +476,14 @@ function Modal({ modal, onClose }) { useEffect(() => { if (!modal)
             React.createElement("p", null, "Imagen ilustrativa. Las fotos reales del liceo podrán incorporarse aquí.")))); }
 function App() {
     const [theme, setTheme] = useState(() => { try {
-        return localStorage.getItem('veritas_theme') || 'dark';
+        return localStorage.getItem('casahogar_theme') === 'dark' ? 'dark' : 'light';
     }
     catch (_a) {
-        return 'dark';
+        return 'light';
     } });
     const [filter, setFilter] = useState('all'), [search, setSearch] = useState(''), [searchOpen, setSearchOpen] = useState(false), [modal, setModal] = useState(null), [bookmarks, setBookmarks] = useState([]), [subEmail, setSubEmail] = useState(''), [subMessage, setSubMessage] = useState('');
-    useEffect(() => { document.documentElement.dataset.theme = theme; try {
-        localStorage.setItem('veritas_theme', theme);
+    useEffect(() => { document.documentElement.dataset.theme = theme; document.querySelector('meta[name="theme-color"]')?.setAttribute('content', theme === 'dark' ? '#0b1117' : '#fdfcf7'); try {
+        localStorage.setItem('casahogar_theme', theme);
     }
     catch (_a) { } }, [theme]);
     const searchResults = useMemo(() => articles.filter(a => [a.title, a.category, a.excerpt].join(' ').toLowerCase().includes(search.toLowerCase())), [search]);
