@@ -131,3 +131,24 @@ footer{position:relative;background:var(--footer);border-top:1px solid var(--foo
 :root[data-theme='light'] .ticker-window:focus-visible{outline-color:#17694f}
 @media(max-width:520px){.news-ticker{height:42px}.ticker-inner{display:flex;gap:7px}.ticker-headline{font-size:10px;padding:0 18px}.ticker-label{padding-inline:9px}}
 @media(prefers-reduced-motion:reduce){.ticker-window{overflow-x:auto;mask-image:none;scrollbar-width:thin}.ticker-marquee{animation:none}.ticker-group[aria-hidden='true']{display:none}}
+
+/* Hero: ambient fill behind the copy + soft fade so the photo never ends abruptly */
+.hero-ambient{position:absolute;inset:-40px;z-index:-4;background-size:cover;background-position:center;filter:blur(38px) saturate(1.25) brightness(.55);transform:scale(1.15)}
+.hero-ambient:after{content:'';position:absolute;inset:0;background:linear-gradient(90deg,rgba(11,16,23,.78) 0%,rgba(11,16,23,.45) 40%,transparent 75%)}
+.hero-image{-webkit-mask-image:linear-gradient(90deg,transparent 0%,rgba(0,0,0,.35) 12%,#000 38%);mask-image:linear-gradient(90deg,transparent 0%,rgba(0,0,0,.35) 12%,#000 38%)}
+.hero-scrim{background:linear-gradient(90deg,rgba(11,16,23,.7) 0%,rgba(11,16,23,.45) 28%,rgba(11,16,23,.12) 50%,transparent 72%),linear-gradient(0deg,rgba(4,8,13,.35),transparent 40%)}
+:root[data-theme='light'] .hero-ambient{filter:blur(38px) saturate(1.1) brightness(1.15)}
+:root[data-theme='light'] .hero-ambient:after{background:linear-gradient(90deg,rgba(252,252,245,.9) 0%,rgba(252,252,245,.62) 40%,rgba(252,252,245,.1) 75%)}
+:root[data-theme='light'] .hero-scrim{background:linear-gradient(90deg,rgba(252,252,245,.72) 0%,rgba(252,252,245,.5) 28%,rgba(252,252,245,.12) 52%,transparent 72%)}
+@media(max-width:520px){
+  .hero-image{-webkit-mask-image:linear-gradient(180deg,#000 0,#000 230px,transparent 375px);mask-image:linear-gradient(180deg,#000 0,#000 230px,transparent 375px)}
+  .hero-ambient:after{background:linear-gradient(0deg,rgba(11,17,23,.85) 0%,rgba(11,17,23,.5) 45%,transparent 75%)}
+  .hero-scrim{background:linear-gradient(0deg,rgba(11,17,23,.8) 0%,rgba(11,17,23,.55) 30%,transparent 65%)}
+  :root[data-theme='light'] .hero-ambient:after{background:linear-gradient(0deg,rgba(252,252,245,.92) 0%,rgba(252,252,245,.6) 45%,transparent 75%)}
+  :root[data-theme='light'] .hero-scrim{background:linear-gradient(0deg,rgba(252,252,245,.85) 0%,rgba(252,252,245,.55) 32%,transparent 66%)}
+}
+
+/* Hero: carousel slide transition */
+.hero-slide{animation:hero-slide-in .7s cubic-bezier(.22,1,.36,1) both}
+@keyframes hero-slide-in{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+@media(prefers-reduced-motion:reduce){.hero-slide{animation:none}}

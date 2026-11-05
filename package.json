@@ -5,10 +5,12 @@
   "type": "module",
   "scripts": {
     "dev": "vite --host 0.0.0.0",
-    "build": "vite build",
+    "build:preview": "node scripts/build-preview.mjs",
+    "build": "vite build && node scripts/build-preview.mjs",
     "preview": "vite preview --host 0.0.0.0"
   },
   "dependencies": {
+    "@supabase/supabase-js": "^2.49.1",
     "lucide-react": "^0.468.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0"

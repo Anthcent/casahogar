@@ -1,4 +1,8 @@
 export function parseRoute(hash) {
+  if (hash === '#/admin' || hash.startsWith('#/admin/')) {
+    return { type: 'admin' };
+  }
+
   if (hash === '#/blog') return { type: 'blog' };
 
   const article = hash.match(/^#\/articulo\/([^/?#]+)$/);
