@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import {
   ArrowLeft, ArrowUp, ArrowDown, Plus, Trash2, Save, LogOut, Upload,
-  Cloud, HardDrive, Newspaper, Sparkles, CalendarDays, Headphones,
+  Cloud, Newspaper, Sparkles, CalendarDays, Headphones,
   School, Camera, BookOpen, Share2, Database, RotateCcw, Download,
   Check, Lock, Copy, ExternalLink
 } from 'lucide-react';
@@ -138,11 +138,6 @@ function AdminLoginScreen({ authMode, onLoggedIn }) {
   const [password, setPassword] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
-  const [showCloudSetup, setShowCloudSetup] = useState(false);
-  const initialCfg = getSupabaseConfig();
-  const [sbUrl, setSbUrl] = useState(initialCfg.url);
-  const [sbKey, setSbKey] = useState(initialCfg.anonKey);
-  const [cfgMsg, setCfgMsg] = useState('');
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -154,14 +149,6 @@ function AdminLoginScreen({ authMode, onLoggedIn }) {
       setError(res.error);
       return;
     }
-    onLoggedIn();
-  };
-
-  const handleSaveCloud = async (e) => {
-    e.preventDefault();
-    saveSupabaseConfig({ url: sbUrl, anonKey: sbKey });
-    setCfgMsg('Conexión guardada. Ahora inicia sesión con tu usuario de Supabase Auth.');
-    await refreshFromCloud();
     onLoggedIn();
   };
 
@@ -178,14 +165,7 @@ function AdminLoginScreen({ authMode, onLoggedIn }) {
             <p>Gestiona noticias, portada, cintillo, agenda, galería, podcasts y lecturas de Casa Hogar.</p>
           </div>
 
-          <div style={{ marginBottom: 16 }}>
-            <span className={`admin-mode-pill ${authMode === 'cloud' ? 'is-cloud' : ''}`}>
-              {authMode === 'cloud' ? <><Cloud size={13} /> Conectado a Supabase</> : <><HardDrive size={13} /> Modo local (sin nube aún)</>}
-            </span>
-          </div>
-
           {error && <div className="admin-alert admin-alert-error" style={{ marginBottom: 14 }}>{error}</div>}
-          {cfgMsg && <div className="admin-alert admin-alert-ok" style={{ marginBottom: 14 }}>{cfgMsg}</div>}
 
           <form onSubmit={handleSubmit} className="admin-form-stack">
             <div className="admin-field">
@@ -221,56 +201,6 @@ function AdminLoginScreen({ authMode, onLoggedIn }) {
             <div className="admin-local-hint">
               <strong>Vista previa sin nube conectada:</strong> accede con <code>admin@casahogar.edu</code> y contraseña <code>casahogar2026</code> (puedes cambiarla dentro del panel o conectar Supabase).
             </div>
-          )}
-
-          <div style={{ marginTop: 14 }}>
-            <button
-              type="button"
-              className="admin-btn admin-btn-sm"
-              onClick={() => setShowCloudSetup((s) => !s)}
-            >
-              <Database size={13} /> {showCloudSetup ? 'Ocultar ajustes de nube' : 'Conectar proyecto Supabase'}
-            </button>
-          </div>
-
-          {showCloudSetup && (
-            <form onSubmit={handleSaveCloud} className="admin-form-stack" style={{ marginTop: 14, paddingTop: 14, borderTop: '1px solid var(--line)' }}>
-              <div className="admin-field">
-                <label>Supabase Project URL</label>
-                <input
-                  type="url"
-                  placeholder="https://xyzcompany.supabase.co"
-                  value={sbUrl}
-                  onChange={(e) => setSbUrl(e.target.value)}
-                />
-              </div>
-              <div className="admin-field">
-                <label>Supabase Anon Public Key</label>
-                <input
-                  type="text"
-                  placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6..."
-                  value={sbKey}
-                  onChange={(e) => setSbKey(e.target.value)}
-                />
-              </div>
-              <div className="admin-row-actions">
-                <button type="submit" className="admin-btn admin-btn-sm admin-btn-primary">Guardar conexión</button>
-                {isSupabaseConfigured() && (
-                  <button
-                    type="button"
-                    className="admin-btn admin-btn-sm admin-btn-danger"
-                    onClick={() => {
-                      clearSupabaseConfig();
-                      setSbUrl('');
-                      setSbKey('');
-                      onLoggedIn();
-                    }}
-                  >
-                    Usar modo local
-                  </button>
-                )}
-              </div>
-            </form>
           )}
         </div>
       </div>
@@ -429,9 +359,6 @@ export function AdminPage() {
           </div>
 
           <div className="admin-actions-bar">
-            <span className={`admin-mode-pill ${syncStatus === 'cloud' ? 'is-cloud' : ''}`}>
-              {isSupabaseConfigured() ? <><Cloud size={13} /> Supabase activo</> : <><HardDrive size={13} /> Modo local</>}
-            </span>
             {isDirty && <span className="admin-mode-pill is-dirty">Cambios sin guardar</span>}
             {isDirty && (
               <button
