@@ -1259,11 +1259,19 @@ export function AdminPage() {
                         />
                       </div>
                       <div className="admin-field">
-                        <label>Descripción al hacer clic</label>
+                        <label>Resumen de la página</label>
                         <textarea
                           rows={3}
                           value={draft.campus.modalExcerpt}
                           onChange={(e) => updateDraft((d) => { d.campus.modalExcerpt = e.target.value; return d; })}
+                        />
+                      </div>
+                      <div className="admin-field">
+                        <label>Texto completo de la página (separa párrafos con una línea en blanco)</label>
+                        <textarea
+                          rows={6}
+                          value={draft.campus.body || ''}
+                          onChange={(e) => updateDraft((d) => { d.campus.body = e.target.value; return d; })}
                         />
                       </div>
                     </div>
@@ -1367,11 +1375,19 @@ export function AdminPage() {
                           onChange={(url) => updateDraft((d) => { d.campus.links[idx].imageUrl = url; return d; })}
                         />
                         <div className="admin-field">
-                          <label>Texto descriptivo al abrir</label>
+                          <label>Resumen</label>
                           <textarea
                             rows={2}
                             value={item.excerpt || ''}
                             onChange={(e) => updateDraft((d) => { d.campus.links[idx].excerpt = e.target.value; return d; })}
+                          />
+                        </div>
+                        <div className="admin-field">
+                          <label>Texto del artículo (separa párrafos con una línea en blanco)</label>
+                          <textarea
+                            rows={6}
+                            value={item.body || ''}
+                            onChange={(e) => updateDraft((d) => { d.campus.links[idx].body = e.target.value; return d; })}
                           />
                         </div>
                       </div>
@@ -1387,7 +1403,7 @@ export function AdminPage() {
                 <div className="admin-card-head">
                   <div>
                     <h2>Galería fotográfica</h2>
-                    <p>Las primeras 4 imágenes alimentan el mosaico de portada y todas se exhiben en la página #/galeria.</p>
+                    <p>Las primeras 4 imágenes alimentan el mosaico de portada. En #/galeria se agrupan por álbum junto con las fotos de artículos, vida escolar, videos y publicaciones.</p>
                   </div>
                   <button
                     type="button"
@@ -1406,6 +1422,9 @@ export function AdminPage() {
                   </button>
                 </div>
 
+                <datalist id="admin-gallery-albums">
+                  {[...new Set(draft.gallery.map((p) => (p.album || '').trim()).filter(Boolean))].map((name) => <option key={name} value={name} />)}
+                </datalist>
                 {draft.gallery.map((photo, idx) => (
                   <div key={photo.id || idx} className="admin-item-card">
                     <div className="admin-item-top">
@@ -1460,6 +1479,16 @@ export function AdminPage() {
                             type="text"
                             value={photo.caption || ''}
                             onChange={(e) => updateDraft((d) => { d.gallery[idx].caption = e.target.value; return d; })}
+                          />
+                        </div>
+                        <div className="admin-field">
+                          <label>Álbum</label>
+                          <input
+                            type="text"
+                            list="admin-gallery-albums"
+                            placeholder="Momentos del liceo"
+                            value={photo.album || ''}
+                            onChange={(e) => updateDraft((d) => { d.gallery[idx].album = e.target.value; return d; })}
                           />
                         </div>
                       </div>

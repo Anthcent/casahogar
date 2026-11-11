@@ -1,5 +1,5 @@
-import { useEffect, useRef, useState } from 'react';
-import { ArrowLeft, ArrowRight, ChevronLeft, ChevronRight, Search, X } from 'lucide-react';
+import { useState } from 'react';
+import { ArrowLeft, ArrowRight, Search } from 'lucide-react';
 import { IMAGE_ALTS } from '../data/content.js';
 import { articleDetails } from '../data/editorial.js';
 import { useSiteContent, filters, resolveAssetUrl } from '../lib/cmsStore.js';
@@ -91,30 +91,77 @@ export function ArticlePage({ id }) {
   </div></main>;
 }
 
-function GalleryViewer({ photos, selected, setSelected, onClose }) {
-  const ref = useRef(null);
-  useEffect(() => {
-    if (ref.current && !ref.current.open) ref.current.showModal();
-  }, []);
-  const item = photos[selected];
-  if (!item) return null;
-  return <dialog ref={ref} className="gallery-dialog" onClose={onClose} onClick={event => { if (event.target === event.currentTarget) onClose(); }} aria-label="Ver fotografía">
-    <button className="gallery-dialog-close" type="button" onClick={onClose} aria-label="Cerrar imagen"><X size={22} /></button>
-    <img src={resolveAssetUrl(item.imageUrl)} alt={item.alt || 'Fotografía de galería'} />
-    <div className="gallery-dialog-bottom"><button type="button" onClick={() => setSelected((selected + photos.length - 1) % photos.length)} aria-label="Imagen anterior"><ChevronLeft size={22} /></button><span>{selected + 1} / {photos.length}{item.caption ? ` · ${item.caption}` : ''}</span><button type="button" onClick={() => setSelected((selected + 1) % photos.length)} aria-label="Imagen siguiente"><ChevronRight size={22} /></button></div>
-  </dialog>;
+const toParagraphs = text => String(text || '').split(/\n\s*\n/).map(p => p.trim()).filter(Boolean);
+const campusHref = id => `#/vida-escolar/${encodeURIComponent(id)}`;
+
+function CampusExperienceCard({ item }) {
+  return <a className="story-card" href={campusHref(item.id)}>
+    <EditorialPhoto src={item.imageUrl} alt={item.imageAlt || item.title} />
+    <div className="story-card-copy">
+      <span className="story-category">{item.date || 'VIDA ESCOLAR'}</span>
+      <h2>{item.title}</h2>
+      {item.excerpt && <p>{item.excerpt}</p>}
+      <span className="story-card-link">Leer más <ArrowRight size={16} /></span>
+    </div>
+  </a>;
 }
 
-export function GalleryPage({ initialIndex = null }) {
+export function CampusPage({ id = null }) {
   const { content } = useSiteContent();
-  const photos = content.gallery;
-  const safeIndex = initialIndex !== null && initialIndex >= 0 && initialIndex < photos.length ? initialIndex : null;
-  const [selected, setSelected] = useState(safeIndex);
-  useEffect(() => { setSelected(safeIndex); }, [safeIndex]);
+  const campus = content.campus;
+  const links = (campus.links || []).filter(item => item.id);
+
+  if (id === null) {
+    const body = toParagraphs(campus.body);
+    return <main className="editorial-page" id="contenido"><div className="page-shell">
+      <PageIntro eyebrow="VIDA ESCOLAR" title={campus.modalTitle || 'Aprender y crecer juntos'} description={campus.modalExcerpt} />
+      <div className="article-layout">
+        <article className="article-body">
+          <figure className="article-figure">
+            <EditorialPhoto src={campus.imageUrl} alt={campus.imageAlt} />
+          </figure>
+          {body.length > 0 && <div className="article-prose">
+            <p className="article-lead">{body[0]}</p>
+            {body.slice(1).map((paragraph, idx) => <p key={idx}>{paragraph}</p>)}
+          </div>}
+        </article>
+        <aside className="article-aside" aria-label="Experiencias de vida escolar"><h2>Experiencias</h2>{links.map(item => <a href={campusHref(item.id)} key={item.id}><span>{item.date || 'VIDA ESCOLAR'}</span><strong>{item.title}</strong><ArrowRight size={16} /></a>)}<a className="aside-all" href="#/galeria">Ver la galería <ArrowRight size={16} /></a></aside>
+      </div>
+      {links.length > 0 && <>
+        <div className="editorial-section-title campus-page-section"><h2>Experiencias de nuestra comunidad</h2><span>{links.length} {links.length === 1 ? 'experiencia' : 'experiencias'}</span></div>
+        <div className="story-grid">{links.map(item => <CampusExperienceCard key={item.id} item={item} />)}</div>
+      </>}
+    </div></main>;
+  }
+
+  const index = links.findIndex(item => item.id === id);
+  const item = links[index];
+  if (!item) return <main className="editorial-page" id="contenido"><div className="page-shell editorial-not-found"><PageIntro back="#/vida-escolar" backLabel="Volver a Vida escolar" eyebrow="VIDA ESCOLAR" title="No encontramos esta experiencia" description="Puede que el enlace haya cambiado. Explora el resto de experiencias del liceo." /><a className="editorial-cta" href="#/vida-escolar">Ver vida escolar <ArrowRight size={16} /></a></div></main>;
+
+  const body = toParagraphs(item.body);
+  const prev = links.length > 1 ? links[(index + links.length - 1) % links.length] : null;
+  const next = links.length > 1 ? links[(index + 1) % links.length] : null;
+  const others = links.filter(other => other.id !== item.id).slice(0, 4);
+
   return <main className="editorial-page" id="contenido"><div className="page-shell">
-    <PageIntro eyebrow="GALERÍA" title="Vida escolar en imágenes" description="Una mirada visual al aprendizaje, la convivencia y la creatividad en nuestra comunidad." />
-    <div className="editorial-section-title"><h2>Explora la galería</h2><span>{photos.length} {photos.length === 1 ? 'imagen' : 'imágenes'}</span></div>
-    <div className="gallery-page-grid">{photos.map((photo, index) => <button className={`gallery-page-tile gallery-tile-${(index % 5) + 1}`} type="button" key={photo.id || index} onClick={() => setSelected(index)} aria-label={`Ampliar imagen ${index + 1}: ${photo.alt || ''}`}><EditorialPhoto src={photo.imageUrl} alt={photo.alt} /><span>Ver imagen <ArrowRight size={16} /></span></button>)}</div>
-    <div className="gallery-page-note"><span>CASA HOGAR</span><p>Momentos, actividades y proyectos compartidos de nuestro liceo.</p><a href="#/blog">Leer historias del liceo <ArrowRight size={16} /></a></div>
-  </div>{selected !== null && <GalleryViewer photos={photos} selected={selected} setSelected={setSelected} onClose={() => setSelected(null)} />}</main>;
+    <PageIntro back="#/vida-escolar" backLabel="Volver a Vida escolar" eyebrow={`VIDA ESCOLAR${item.date ? ` · ${item.date.toLocaleUpperCase('es')}` : ''}`} title={item.title} description={item.excerpt} />
+    <div className="article-layout">
+      <article className="article-body">
+        <figure className="article-figure">
+          <EditorialPhoto src={item.imageUrl} alt={item.imageAlt || item.title} />
+        </figure>
+        <div className="article-prose">
+          {body.length > 0 && <p className="article-lead">{body[0]}</p>}
+          {body.slice(1).map((paragraph, idx) => <p key={idx}>{paragraph}</p>)}
+          <div className="article-endmark" aria-hidden="true">CH</div>
+          <p className="article-note">Casa Hogar · Vida escolar</p>
+        </div>
+        {prev && next && <nav className="article-pager" aria-label="Otras experiencias">
+          <a href={campusHref(prev.id)}><ArrowLeft size={16} /><span><small>Anterior</small>{prev.title}</span></a>
+          <a href={campusHref(next.id)}><span><small>Siguiente</small>{next.title}</span><ArrowRight size={16} /></a>
+        </nav>}
+      </article>
+      <aside className="article-aside" aria-label="Más experiencias"><h2>Más de vida escolar</h2>{others.map(other => <a href={campusHref(other.id)} key={other.id}><span>{other.date || 'VIDA ESCOLAR'}</span><strong>{other.title}</strong><ArrowRight size={16} /></a>)}<a className="aside-all" href="#/vida-escolar">Toda la vida escolar <ArrowRight size={16} /></a></aside>
+    </div>
+  </div></main>;
 }

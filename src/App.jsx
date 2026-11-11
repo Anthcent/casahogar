@@ -4,10 +4,11 @@ import {
   CalendarDays, Clock3, Bookmark, Instagram, Youtube, Facebook, Quote,
   Globe2, CircleUserRound, House, School, UsersRound, MessagesSquare,
   Clapperboard, Newspaper, NotebookPen, Shapes, MessageSquareQuote,
-  Lightbulb, Grid2X2, Video, ExternalLink
+  Lightbulb, Grid2X2, Video, ExternalLink, LockKeyhole
 } from 'lucide-react';
 import { IMAGE_ALTS } from './data/content.js';
-import { BlogPage, ArticlePage, GalleryPage } from './pages/EditorialPages.jsx';
+import { BlogPage, ArticlePage, CampusPage } from './pages/EditorialPages.jsx';
+import { GalleryPage } from './pages/MediaGallery.jsx';
 import { AdminPage } from './pages/AdminPage.jsx';
 import { parseRoute } from './routes.js';
 import { useSiteContent, subscribeNewsletter, filters, resolveAssetUrl } from './lib/cmsStore.js';
@@ -144,6 +145,9 @@ function Header({ theme, onTheme, toggleSearch, searchOpen, search, setSearch, s
             <button className="theme-toggle" onClick={onTheme} title={theme === 'dark' ? 'Activar modo claro' : 'Activar modo oscuro'} aria-label="Cambiar tema">
               {theme === 'dark' ? <Sun size={17} /> : <Moon size={17} />}
             </button>
+            <a className="theme-toggle admin-toggle" href="#/admin" title="Administración" aria-label="Ir a administración">
+              <LockKeyhole size={16} />
+            </a>
             <button className="menu-toggle" onClick={() => setMobileMenu(s => !s)} aria-label={mobileMenu ? 'Cerrar menú' : 'Abrir menú'}>
               {mobileMenu ? <X size={22} /> : <Menu size={22} />}
             </button>
@@ -427,19 +431,19 @@ function Podcasts({ podcastMeta, podcasts, onVideo }) {
   );
 }
 
-function Campus({ campus, onArticle }) {
+function Campus({ campus, onOpen }) {
   return (
     <section className="campus-section" id="vida-escolar">
       <SectionHeading
         icon={School}
         title="Vida escolar"
         action="Conocer más"
-        onClick={() => onArticle({ title: 'Vida escolar', category: 'VIDA ESCOLAR', imageUrl: campus.imageUrl, excerpt: campus.modalExcerpt })}
+        onClick={() => onOpen()}
       />
       <div className="campus-layout">
         <button
           className="campus-main"
-          onClick={() => onArticle({ title: campus.modalTitle || 'Aprender y crecer juntos', category: 'VIDA ESCOLAR', imageUrl: campus.imageUrl, excerpt: campus.modalExcerpt })}
+          onClick={() => onOpen()}
         >
           <Slot src={campus.imageUrl} alt={campus.imageAlt} className="campus-image">
             <p className="campus-handwriting">{renderMultiline(campus.handwriting)}<span>↗</span></p>
@@ -448,7 +452,7 @@ function Campus({ campus, onArticle }) {
         </button>
         <div className="campus-news">
           {(campus.links || []).map((c, idx) => (
-            <button key={c.id || idx} onClick={() => onArticle({ ...c, category: 'VIDA ESCOLAR' })}>
+            <button key={c.id || idx} onClick={() => onOpen(c.id)}>
               <Slot src={c.imageUrl} alt={c.imageAlt} compact className="campus-thumbnail" label={'Imagen: ' + c.title} />
               <span><strong>{c.title}</strong><small>{c.date}</small></span>
             </button>
@@ -556,7 +560,6 @@ function SchoolFooter({ footer, theme, onTheme, subEmail, setSubEmail, onSubscri
               {theme === 'dark' ? <Sun size={14} /> : <Moon size={14} />} Modo {theme === 'dark' ? 'claro' : 'oscuro'}
             </button>
             <span className="footer-utility-dot" aria-hidden="true">·</span>
-            <a className="footer-admin-link" href="#/admin">Admin</a>
           </div>
         </div>
       </div>
@@ -712,7 +715,9 @@ function App() {
         ? 'Blog y noticias — Casa Hogar'
         : route.type === 'gallery'
           ? 'Galería — Casa Hogar'
-          : route.type === 'admin'
+          : route.type === 'campus'
+            ? 'Vida escolar — Casa Hogar'
+            : route.type === 'admin'
             ? 'Administración — Casa Hogar'
             : 'Casa Hogar — Vida escolar y comunidad';
     const description = document.querySelector('meta[name="description"]');
@@ -734,6 +739,7 @@ function App() {
   const openVideo = (item) => setModal({ type: 'video', item });
   const openEvent = (item) => setModal({ type: 'event', item });
   const openReading = (item) => setModal({ type: 'reading', item });
+  const openCampus = (id) => { window.location.hash = id ? `#/vida-escolar/${encodeURIComponent(id)}` : '#/vida-escolar'; };
   const openGallery = (i) => { window.location.hash = i === undefined ? '#/galeria' : `#/galeria/${i}`; };
   const toggleBookmark = (id) => setBookmarks(old => old.includes(id) ? old.filter(x => x !== id) : [...old, id]);
 
@@ -786,7 +792,7 @@ function App() {
                   <Podcasts podcastMeta={content.podcastMeta} podcasts={content.podcasts} onVideo={openVideo} />
                 </div>
                 <div className="double-row double-gallery">
-                  <Campus campus={content.campus} onArticle={openArticle} />
+                  <Campus campus={content.campus} onOpen={openCampus} />
                   <Gallery gallery={content.gallery} campus={content.campus} onGallery={openGallery} />
                 </div>
                 <Readings readings={content.readings} onReading={openReading} />
@@ -798,6 +804,7 @@ function App() {
 
       {route.type === 'blog' && <BlogPage />}
       {route.type === 'article' && <ArticlePage id={route.id} />}
+      {route.type === 'campus' && <CampusPage id={route.id} />}
       {route.type === 'gallery' && <GalleryPage initialIndex={route.index} />}
       {route.type === 'admin' && <AdminPage />}
 

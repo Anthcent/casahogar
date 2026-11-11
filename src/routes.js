@@ -5,6 +5,15 @@ export function parseRoute(hash) {
 
   if (hash === '#/blog') return { type: 'blog' };
 
+  const campus = hash.match(/^#\/vida-escolar(?:\/([^/?#]+))?$/);
+  if (campus) {
+    try {
+      return { type: 'campus', id: campus[1] === undefined ? null : decodeURIComponent(campus[1]) };
+    } catch {
+      return { type: 'campus', id: null };
+    }
+  }
+
   const article = hash.match(/^#\/articulo\/([^/?#]+)$/);
   if (article) {
     try {
