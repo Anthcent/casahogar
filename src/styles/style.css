@@ -225,3 +225,11 @@ footer{position:relative;background:var(--footer);border-top:1px solid var(--foo
 @media(prefers-reduced-motion:reduce){
   .hero-image,.hero-word,.hero-slide .hero-eyebrow,.hero-slide .hero-description,.hero-slide .hero-buttons{animation:none}
 }
+
+/* Voces del liceo: animated voice wave */
+.podcast-wave span{transform-origin:center;animation:voice-wave var(--t,900ms) ease-in-out var(--d,0ms) infinite alternate;will-change:transform}
+@keyframes voice-wave{0%{transform:scaleY(.35)}50%{transform:scaleY(1)}100%{transform:scaleY(.55)}}
+.podcast-feature:hover .podcast-wave span,.podcast-feature:focus-within .podcast-wave span{animation-duration:calc(var(--t,900ms) * .55);background:#d4f2c4}
+.podcast-wave{transition:opacity .3s}
+.podcast-feature:hover .podcast-wave{opacity:1}
+@media(prefers-reduced-motion:reduce){.podcast-wave span{animation:none}}

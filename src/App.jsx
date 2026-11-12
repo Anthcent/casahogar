@@ -534,7 +534,12 @@ function Podcasts({ podcastMeta, podcasts, onVideo }) {
               <strong>{renderMultiline(podcastMeta.heading)}</strong>
               <p>{renderMultiline(podcastMeta.subtitle)}</p>
             </div>
-            <div className="podcast-wave" aria-hidden="true">{bars.map((height, i) => <span key={i} style={{ height }} />)}</div>
+            <div className="podcast-wave" aria-hidden="true">
+              {bars.map((height, i) => (
+                // Varied duration and delay per bar so the wave never moves in lockstep.
+                <span key={i} style={{ height, '--d': `${-((i * 137) % 900)}ms`, '--t': `${700 + ((i * 53) % 5) * 110}ms` }} />
+              ))}
+            </div>
             <button className="big-play" aria-label="Consultar audios de Voces del liceo" onClick={() => onVideo(currentPod)}>
               <Play size={21} fill="currentColor" />
             </button>
