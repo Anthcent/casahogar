@@ -10,7 +10,8 @@ export function parseRoute(hash) {
     return { type: 'admin' };
   }
 
-  if (hash === '#/blog') return { type: 'blog' };
+  const blog = hash.match(/^#\/blog(?:\?tema=([\w-]+))?$/);
+  if (blog) return { type: 'blog', topic: blog[1] || 'all' };
 
   for (const [slug, type] of SECTIONS) {
     const match = hash.match(new RegExp(`^#/${slug}(?:/([^/?#]+))?$`));

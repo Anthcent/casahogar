@@ -266,29 +266,51 @@ function Hero({ hero, onArticle, onVideo }) {
   );
 }
 
-function FilterNav({ selected, onSelect }) {
+function FilterNav({ selected, onSelect, articles, mediaCount }) {
   return (
-    <div className="filters">
+    <nav className="filters" aria-label="Explorar por tema">
       <div className="page-shell filters-scroll">
         {filters.map(f => {
           const Icon = icons[f.icon] || Grid2X2;
+          if (f.id === 'media') {
+            return (
+              <a key={f.id} className="filter-btn filter-link" href="#/galeria" title="Abrir el álbum multimedia">
+                <Icon size={18} strokeWidth={1.8} />
+                <span>{f.label}</span>
+                {mediaCount > 0 && <small className="filter-count">{mediaCount}</small>}
+                <ArrowRight size={12} className="filter-go" />
+              </a>
+            );
+          }
+          const count = f.id === 'all' ? articles.length : articles.filter(a => a.filter === f.id).length;
+          const empty = count === 0;
           return (
-            <button key={f.id} className={'filter-btn ' + (selected === f.id ? 'active' : '')} onClick={() => onSelect(f.id)} aria-pressed={selected === f.id}>
+            <button
+              key={f.id}
+              type="button"
+              className={'filter-btn ' + (selected === f.id ? 'active' : '') + (empty ? ' filter-empty' : '')}
+              onClick={() => onSelect(f.id)}
+              aria-pressed={selected === f.id}
+              disabled={empty}
+              title={empty ? 'Aún no hay historias en este tema' : undefined}
+            >
               <Icon size={18} strokeWidth={1.8} />
               <span>{f.label}</span>
+              <small className="filter-count">{count}</small>
             </button>
           );
         })}
       </div>
-    </div>
+    </nav>
   );
 }
 
-function FeatureCard({ article, onArticle, variant = 'large' }) {
+function FeatureCard({ article, onArticle, variant = 'large', related = false }) {
   if (!article) return null;
   const large = variant === 'large';
   return (
-    <button className={'feature-card feature-' + variant} onClick={() => onArticle(article)}>
+    <button className={'feature-card feature-' + variant + (related ? ' feature-related' : '')} onClick={() => onArticle(article)}>
+      {related && <span className="feature-related-tag">También te puede interesar</span>}
       <Slot src={article.imageUrl || article.image} alt={article.imageAlt} className="feature-photo" label={'Imagen pendiente: ' + article.title}>
         {large && <div className="feature-gradient" />}
         <div className="feature-body">
@@ -329,22 +351,26 @@ function Events({ events, onEvent }) {
 }
 
 function Featured({ articles, quote, events, onArticle, onEvent, filter, onBrowse }) {
-  const base = articles.slice(0, 3);
-  const focus = filter === 'all' ? base[0] : (articles.find(a => a.filter === filter) || base[0]);
-  const mids = articles.filter(a => a.id !== focus?.id).slice(0, 2);
+  const matched = filter === 'all' ? articles : articles.filter(a => a.filter === filter);
+  const fill = filter === 'all' ? [] : articles.filter(a => a.filter !== filter);
+  const picks = [...matched.slice(0, 3).map(a => ({ article: a, related: false })), ...fill.map(a => ({ article: a, related: true }))].slice(0, 3);
+  const [focus, ...mids] = picks;
+  const label = filters.find(f => f.id === filter)?.label;
 
   return (
     <section className="page-shell featured-section" id="historias">
       <SectionHeading
         icon={Newspaper}
-        title={filter === 'all' ? 'Historias destacadas' : `${filters.find(f => f.id === filter)?.label ?? 'Historias'} destacadas`}
-        onClick={onBrowse}
-        action="Ver todas las historias"
+        title={filter === 'all' ? 'Historias destacadas' : `${label ?? 'Historias'} · ${matched.length} ${matched.length === 1 ? 'historia' : 'historias'}`}
+        onClick={() => onBrowse(filter)}
+        action={filter === 'all' ? 'Ver todas las historias' : `Ver todo en ${label}`}
       />
       <div className="featured-grid">
-        <FeatureCard article={focus} onArticle={onArticle} />
-        <div className="side-stories">
-          {mids.map(a => <FeatureCard article={a} key={a.id} onArticle={onArticle} variant="small" />)}
+        <div className="featured-stage" key={filter}>
+          <FeatureCard article={focus?.article} related={focus?.related} onArticle={onArticle} />
+        </div>
+        <div className="side-stories" key={filter + '-side'}>
+          {mids.map(({ article, related }) => <FeatureCard article={article} related={related} key={article.id} onArticle={onArticle} variant="small" />)}
         </div>
         <aside className="right-rail">
           <div className="quote-card quote-photo-card">
@@ -749,14 +775,14 @@ function App() {
           <Ticker headlines={content.ticker} />
           <main>
             <Hero hero={content.hero} onArticle={openArticle} onVideo={openVideo} />
-            <FilterNav selected={filter} onSelect={setFilter} />
+            <FilterNav selected={filter} onSelect={setFilter} articles={content.articles} mediaCount={content.gallery.length} />
             <div className="editorial-bg">
               <Featured
                 articles={content.articles}
                 quote={content.quote}
                 events={content.events}
                 filter={filter}
-                onBrowse={() => { window.location.hash = '#/blog'; }}
+                onBrowse={(topic) => { window.location.hash = topic && topic !== 'all' ? `#/blog?tema=${topic}` : '#/blog'; }}
                 onArticle={openArticle}
                 onEvent={openEvent}
               />
@@ -782,7 +808,7 @@ function App() {
         </>
       )}
 
-      {route.type === 'blog' && <BlogPage />}
+      {route.type === 'blog' && <BlogPage initialTopic={route.topic} />}
       {route.type === 'article' && <ArticlePage id={route.id} />}
       {route.type === 'campus' && <CampusPage id={route.id} />}
       {route.type === 'agenda' && <AgendaPage id={route.id} />}
