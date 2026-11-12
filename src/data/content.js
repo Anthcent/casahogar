@@ -67,15 +67,25 @@ export const ticker = [
 ];
 
 export const filters = [
-  { id: 'all', label: 'Todo', icon: 'all' },
-  { id: 'faith', label: 'Formación', icon: 'formation' },
-  { id: 'campus', label: 'Vida escolar', icon: 'school' },
-  { id: 'science', label: 'Ciencia y arte', icon: 'creative' },
-  { id: 'social', label: 'Comunidad', icon: 'community' },
-  { id: 'testimonies', label: 'Voces', icon: 'voices' },
-  { id: 'opinion', label: 'Ideas', icon: 'ideas' },
-  { id: 'media', label: 'Multimedia', icon: 'media' },
+  { id: 'all', slug: 'todo', label: 'Todo', icon: 'all' },
+  { id: 'faith', slug: 'formacion', label: 'Formación', icon: 'formation' },
+  { id: 'campus', slug: 'vida-escolar', label: 'Vida escolar', icon: 'school' },
+  { id: 'science', slug: 'ciencia-y-arte', label: 'Ciencia y arte', icon: 'creative' },
+  { id: 'social', slug: 'comunidad', label: 'Comunidad', icon: 'community' },
+  { id: 'testimonies', slug: 'voces', label: 'Voces', icon: 'voices' },
+  { id: 'opinion', slug: 'ideas', label: 'Ideas', icon: 'ideas' },
+  { id: 'media', slug: 'multimedia', label: 'Multimedia', icon: 'media' },
 ];
+
+/** Resolves a topic from its URL slug or legacy id; falls back to 'all'. */
+export function topicFromParam(value) {
+  const match = filters.find(f => f.slug === value || f.id === value);
+  return match ? match.id : 'all';
+}
+
+export function topicSlug(id) {
+  return filters.find(f => f.id === id)?.slug || id;
+}
 
 export const articles = [
   { id: 'convivencia', category: 'VIDA ESCOLAR', filter: 'campus', title: 'Aprender juntos en el aula y en comunidad', excerpt: 'Las clases, los proyectos compartidos y las actividades del liceo son parte de una experiencia escolar que se construye día a día.', read: '5 min de lectura', author: 'Comunidad educativa', image: 'featuredService', type: 'featured' },

@@ -547,36 +547,6 @@
   font-weight: 700;
 }
 
-/* Botón súper sutil en el footer junto a Modo oscuro */
-.footer-utility {
-  display: flex;
-  align-items: center;
-  gap: 7px;
-  margin-top: 10px;
-  flex-wrap: wrap;
-}
-
-.footer-utility .footer-theme {
-  margin-top: 0;
-}
-
-.footer-utility-dot {
-  font-size: 9px;
-  color: var(--muted);
-  opacity: 0.35;
-  user-select: none;
-}
-
-.admin-toggle {
-  transition: transform 0.2s ease, background 0.2s ease;
-}
-
-.admin-toggle:hover,
-.admin-toggle:focus-visible {
-  transform: translateY(-1px);
-  background: rgba(255, 255, 255, 0.08);
-}
-
 @media (max-width: 960px) {
   .admin-workspace {
     grid-template-columns: 1fr;

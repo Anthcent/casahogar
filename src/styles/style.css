@@ -173,3 +173,10 @@ footer{position:relative;background:var(--footer);border-top:1px solid var(--foo
 .feature-related-tag{position:absolute;top:8px;left:8px;z-index:4;padding:3px 8px;border-radius:999px;background:rgba(11,17,23,.78);color:#fff;font-size:8px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;backdrop-filter:blur(4px)}
 .feature-related{filter:saturate(.75)}
 @media(prefers-reduced-motion:reduce){.featured-stage>.feature-card,.side-stories>.feature-card{animation:none}}
+
+/* Footer utilities and header admin icon */
+.footer-utility{display:flex;align-items:center;gap:7px;margin-top:10px;flex-wrap:wrap}
+.footer-utility .footer-theme{margin-top:0}
+.admin-toggle{transition:transform .2s ease,background .2s ease}
+.admin-toggle:hover,.admin-toggle:focus-visible{transform:translateY(-1px);background:rgba(255,255,255,.08)}
+.admin-loading{min-height:60vh;display:grid;place-items:center;color:var(--muted)}

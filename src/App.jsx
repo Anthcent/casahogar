@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, lazy, Suspense } from 'react';
 import {
   ArrowRight, Search, Menu, X, Sun, Moon, Play, ChevronRight, BookOpen,
   CalendarDays, Clock3, Bookmark, Instagram, Youtube, Facebook, Quote,
@@ -6,11 +6,12 @@ import {
   Clapperboard, Newspaper, NotebookPen, Shapes, MessageSquareQuote,
   Lightbulb, Grid2X2, Video, ExternalLink, LockKeyhole
 } from 'lucide-react';
-import { IMAGE_ALTS } from './data/content.js';
+import { IMAGE_ALTS, topicSlug } from './data/content.js';
 import { BlogPage, ArticlePage, CampusPage } from './pages/EditorialPages.jsx';
 import { GalleryPage } from './pages/MediaGallery.jsx';
 import { AgendaPage, ReadingsPage } from './pages/SchoolPages.jsx';
-import { AdminPage } from './pages/AdminPage.jsx';
+// The CMS is only needed on #/admin; keep it out of the public bundle.
+const AdminPage = lazy(() => import('./pages/AdminPage.jsx').then(module => ({ default: module.AdminPage })));
 import { parseRoute } from './routes.js';
 import { useSiteContent, subscribeNewsletter, filters, resolveAssetUrl } from './lib/cmsStore.js';
 
@@ -586,7 +587,6 @@ function SchoolFooter({ footer, theme, onTheme, subEmail, setSubEmail, onSubscri
             <button className="footer-theme" onClick={onTheme}>
               {theme === 'dark' ? <Sun size={14} /> : <Moon size={14} />} Modo {theme === 'dark' ? 'claro' : 'oscuro'}
             </button>
-            <span className="footer-utility-dot" aria-hidden="true">·</span>
           </div>
         </div>
       </div>
@@ -782,7 +782,7 @@ function App() {
                 quote={content.quote}
                 events={content.events}
                 filter={filter}
-                onBrowse={(topic) => { window.location.hash = topic && topic !== 'all' ? `#/blog?tema=${topic}` : '#/blog'; }}
+                onBrowse={(topic) => { window.location.hash = topic && topic !== 'all' ? `#/blog?tema=${topicSlug(topic)}` : '#/blog'; }}
                 onArticle={openArticle}
                 onEvent={openEvent}
               />
@@ -814,7 +814,11 @@ function App() {
       {route.type === 'agenda' && <AgendaPage id={route.id} />}
       {route.type === 'readings' && <ReadingsPage id={route.id} />}
       {route.type === 'gallery' && <GalleryPage initialIndex={route.index} />}
-      {route.type === 'admin' && <AdminPage />}
+      {route.type === 'admin' && (
+        <Suspense fallback={<main className="editorial-page admin-loading" aria-busy="true"><div className="page-shell"><p>Cargando administración…</p></div></main>}>
+          <AdminPage />
+        </Suspense>
+      )}
 
       <SchoolFooter
         footer={content.footer}

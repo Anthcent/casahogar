@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { ArrowLeft, ArrowRight, Search } from 'lucide-react';
-import { IMAGE_ALTS } from '../data/content.js';
+import { IMAGE_ALTS, topicFromParam, topicSlug } from '../data/content.js';
 import { articleDetails } from '../data/editorial.js';
 import { useSiteContent, filters, resolveAssetUrl } from '../lib/cmsStore.js';
 
@@ -37,13 +37,16 @@ function StoryCard({ article, featured = false }) {
 export function BlogPage({ initialTopic = 'all' }) {
   const { content } = useSiteContent();
   const articles = content.articles;
-  const validTopic = value => (topics.some(item => item.id === value) ? value : 'all');
+  const validTopic = value => {
+    const id = topicFromParam(value);
+    return topics.some(item => item.id === id) ? id : 'all';
+  };
   const [topic, setTopicState] = useState(() => validTopic(initialTopic));
   useEffect(() => { setTopicState(validTopic(initialTopic)); }, [initialTopic]);
   // Keep the URL shareable without triggering a route change.
   const setTopic = value => {
     setTopicState(value);
-    history.replaceState(null, '', value === 'all' ? '#/blog' : `#/blog?tema=${value}`);
+    history.replaceState(null, '', value === 'all' ? '#/blog' : `#/blog?tema=${topicSlug(value)}`);
   };
   const [query, setQuery] = useState('');
   const visible = articles.filter(article =>

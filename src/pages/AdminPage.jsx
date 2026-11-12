@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import '../styles/admin.css';
 import {
   ArrowLeft, ArrowUp, ArrowDown, Plus, Trash2, Save, LogOut, Upload,
   Cloud, Newspaper, Sparkles, CalendarDays, Headphones,
