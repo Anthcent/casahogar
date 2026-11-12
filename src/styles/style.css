@@ -198,21 +198,22 @@ footer{position:relative;background:var(--footer);border-top:1px solid var(--foo
 :root[data-theme='light'] .hero-pager button.active:after{background:rgba(16,53,44,.2)}
 :root[data-theme='light'] .hero-progress{background:#e69919}
 
-/* "En el liceo" carousel */
-.post-carousel{position:relative;--post-cols:4;--post-gap:6px}
-.post-track{overflow-x:auto;display:flex;gap:var(--post-gap);scrollbar-width:none;-webkit-mask-image:linear-gradient(90deg,transparent,#000 3%,#000 97%,transparent);mask-image:linear-gradient(90deg,transparent,#000 3%,#000 97%,transparent)}
-.post-track::-webkit-scrollbar{display:none}
-.post-group{display:flex;gap:var(--post-gap);flex-shrink:0}
-.post-carousel{container-type:inline-size}
-.post-group .post-card{flex:0 0 calc((100cqw - (var(--post-cols) - 1) * var(--post-gap)) / var(--post-cols))}
-.post-carousel-btn{position:absolute;top:50%;z-index:3;display:grid;place-items:center;width:32px;height:32px;margin-top:-16px;border-radius:50%;background:var(--panel,#fff);color:var(--text);border:1px solid var(--line);box-shadow:0 6px 16px rgba(0,0,0,.2);opacity:0;transition:opacity .2s,transform .2s}
-.post-carousel:hover .post-carousel-btn,.post-carousel-btn:focus-visible{opacity:1}
-.post-carousel-btn:hover{transform:scale(1.08)}
-.post-carousel-btn.prev{left:4px}
-.post-carousel-btn.next{right:4px}
-@media(hover:none){.post-carousel-btn{opacity:1}}
-@media(max-width:790px){.post-carousel{--post-cols:3}}
-@media(max-width:520px){.post-carousel{--post-cols:2;--post-gap:7px}}
+/* Auto-scrolling carousels ("En el liceo", "Lecturas recomendadas") */
+.auto-carousel{position:relative;container-type:inline-size;--cols:4;--gap:6px}
+.auto-track{overflow-x:auto;display:flex;gap:var(--gap);scrollbar-width:none;-webkit-mask-image:linear-gradient(90deg,transparent,#000 3%,#000 97%,transparent);mask-image:linear-gradient(90deg,transparent,#000 3%,#000 97%,transparent)}
+.auto-track::-webkit-scrollbar{display:none}
+.auto-group{display:flex;gap:var(--gap);flex-shrink:0}
+.auto-group>*{flex:0 0 calc((100cqw - (var(--cols) - 1) * var(--gap)) / var(--cols))}
+.auto-carousel-btn{position:absolute;top:50%;z-index:3;display:grid;place-items:center;width:32px;height:32px;margin-top:-16px;border-radius:50%;background:var(--panel,#fff);color:var(--text);border:1px solid var(--line);box-shadow:0 6px 16px rgba(0,0,0,.2);opacity:0;transition:opacity .2s,transform .2s}
+.auto-carousel:hover .auto-carousel-btn,.auto-carousel-btn:focus-visible{opacity:1}
+.auto-carousel-btn:hover{transform:scale(1.08)}
+.auto-carousel-btn.prev{left:4px}
+.auto-carousel-btn.next{right:4px}
+@media(hover:none){.auto-carousel-btn{opacity:1}}
+.carousel-readings{--gap:8px}
+.carousel-readings .reading-card:hover{transform:translateY(-2px)}
+@media(max-width:790px){.carousel-posts{--cols:3}.carousel-readings{--cols:2;--gap:9px}}
+@media(max-width:520px){.carousel-posts{--cols:2;--gap:7px}.carousel-readings{--cols:1.15;--gap:7px}}
 
 /* Saved articles */
 .post-foot button.saved{color:var(--yellow)}

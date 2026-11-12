@@ -489,49 +489,61 @@ function useAutoScroll(trackRef, enabled) {
   };
 }
 
-function Latest({ articles, onArticle, bookmarks, onBookmark, onBrowse, onSaved }) {
-  const cards = [...articles.slice(3), ...articles.slice(0, 3)];
+/**
+ * Endless, slowly auto-scrolling row. Items render twice so the loop is seamless;
+ * the clone is inert and hidden from assistive tech.
+ */
+function AutoCarousel({ items, renderItem, className = '', prevLabel = 'Anterior', nextLabel = 'Siguiente' }) {
   const trackRef = useRef(null);
-  const loop = cards.length > 2;
+  const loop = items.length > 2;
   const auto = useAutoScroll(trackRef, loop);
 
-  const scrollByCard = direction => {
+  const scrollByItem = direction => {
     const track = trackRef.current;
-    const card = track?.querySelector('.post-card');
-    if (!track || !card) return;
+    const item = track?.firstElementChild?.firstElementChild;
+    if (!track || !item) return;
     auto.holdFor(5000);
-    const half = loopWidth(track);
-    const step = card.getBoundingClientRect().width + parseFloat(getComputedStyle(card.parentElement).columnGap || '0');
-    if (direction < 0 && track.scrollLeft - step < 0) track.scrollLeft += half;
-    if (direction > 0 && track.scrollLeft + step >= half) track.scrollLeft -= half;
+    const period = loopWidth(track);
+    const step = item.getBoundingClientRect().width + parseFloat(getComputedStyle(item.parentElement).columnGap || '0');
+    if (direction < 0 && track.scrollLeft - step < 0) track.scrollLeft += period;
+    if (direction > 0 && track.scrollLeft + step >= period) track.scrollLeft -= period;
     track.scrollBy({ left: direction * step, behavior: 'smooth' });
   };
 
-  const renderCards = () => cards.map((a, i) => (
-    <PostCard key={a.id} article={a} index={i} onArticle={onArticle} saved={bookmarks.includes(a.id)} onBookmark={onBookmark} />
-  ));
+  return (
+    <div
+      className={'auto-carousel ' + className}
+      onMouseEnter={auto.pause}
+      onMouseLeave={auto.resume}
+      onFocusCapture={auto.pause}
+      onBlurCapture={auto.resume}
+      onTouchStart={() => auto.holdFor(6000)}
+      onWheel={() => auto.holdFor(4000)}
+    >
+      <div className="auto-track" ref={trackRef}>
+        <div className="auto-group">{items.map(renderItem)}</div>
+        {loop && <div className="auto-group" aria-hidden="true" inert>{items.map(renderItem)}</div>}
+      </div>
+      {loop && <>
+        <button type="button" className="auto-carousel-btn prev" onClick={() => scrollByItem(-1)} aria-label={prevLabel}><ChevronRight size={16} style={{ transform: 'rotate(180deg)' }} /></button>
+        <button type="button" className="auto-carousel-btn next" onClick={() => scrollByItem(1)} aria-label={nextLabel}><ChevronRight size={16} /></button>
+      </>}
+    </div>
+  );
+}
 
+function Latest({ articles, onArticle, bookmarks, onBookmark, onBrowse, onSaved }) {
+  const cards = [...articles.slice(3), ...articles.slice(0, 3)];
   return (
     <section className="latest-section" id="publicaciones">
       <SectionHeading title="En el liceo" action="Ver historias" onClick={onBrowse} />
-      <div
-        className="post-carousel"
-        onMouseEnter={auto.pause}
-        onMouseLeave={auto.resume}
-        onFocusCapture={auto.pause}
-        onBlurCapture={auto.resume}
-        onTouchStart={() => auto.holdFor(6000)}
-        onWheel={() => auto.holdFor(4000)}
-      >
-        <div className="post-track" ref={trackRef}>
-          <div className="post-group">{renderCards()}</div>
-          {loop && <div className="post-group" aria-hidden="true" inert>{renderCards()}</div>}
-        </div>
-        {loop && <>
-          <button type="button" className="post-carousel-btn prev" onClick={() => scrollByCard(-1)} aria-label="Historias anteriores"><ChevronRight size={16} style={{ transform: 'rotate(180deg)' }} /></button>
-          <button type="button" className="post-carousel-btn next" onClick={() => scrollByCard(1)} aria-label="Más historias"><ChevronRight size={16} /></button>
-        </>}
-      </div>
+      <AutoCarousel
+        className="carousel-posts"
+        items={cards}
+        prevLabel="Historias anteriores"
+        nextLabel="Más historias"
+        renderItem={(a, i) => <PostCard key={a.id} article={a} index={i} onArticle={onArticle} saved={bookmarks.includes(a.id)} onBookmark={onBookmark} />}
+      />
       {bookmarks.length > 0 && (
         <button type="button" className="saved-link" onClick={onSaved}>
           <Bookmark size={14} fill="currentColor" /> Mis guardados <strong>{bookmarks.length}</strong> <ArrowRight size={13} />
@@ -654,8 +666,12 @@ function Readings({ readings, onReading }) {
   return (
     <section className="readings-section" id="lecturas">
       <SectionHeading icon={BookOpen} title="Lecturas recomendadas" onClick={() => onReading(null)} />
-      <div className="reading-grid">
-        {readings.map((r, i) => (
+      <AutoCarousel
+        className="carousel-readings"
+        items={readings}
+        prevLabel="Lecturas anteriores"
+        nextLabel="Más lecturas"
+        renderItem={(r, i) => (
           <button className="reading-card" key={r.id || i} onClick={() => onReading(r)}>
             <Slot src={r.imageUrl} alt={r.imageAlt} className="book-cover" label={'Portada: ' + r.name}>
               {!resolveAssetUrl(r.imageUrl) && <BookOpen size={28} className="book-dummy-icon" />}
@@ -667,8 +683,8 @@ function Readings({ readings, onReading }) {
             </span>
             <ArrowRight size={15} className="reading-arrow" />
           </button>
-        ))}
-      </div>
+        )}
+      />
     </section>
   );
 }
