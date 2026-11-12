@@ -125,3 +125,28 @@
 .article-save{display:inline-flex;align-items:center;gap:8px;margin:-6px 0 26px;padding:9px 16px;border:1px solid var(--editorial-rule);border-radius:999px;font-size:13px;font-weight:800;color:var(--text);transition:background .2s,border-color .2s}
 .article-save:hover{border-color:var(--editorial-accent)}
 .article-save.saved{background:var(--editorial-accent);border-color:var(--editorial-accent);color:var(--bg)}
+
+/* Agenda: countdown, week marker, past events, calendar actions */
+.agenda-item-tags{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:6px}
+.agenda-item-tags:empty{display:none}
+.event-countdown,.agenda-week{display:inline-flex;align-items:center;padding:3px 10px;border-radius:999px;font-size:11px;font-weight:800;letter-spacing:.02em}
+.event-countdown{border:1px solid var(--editorial-accent);color:var(--editorial-accent)}
+.event-countdown.is-soon{background:var(--editorial-accent);color:var(--bg)}
+.event-countdown.is-past{border-color:var(--editorial-rule);color:var(--muted)}
+.agenda-week{background:var(--yellow);color:#17342b}
+.agenda-item.is-past{opacity:.62}
+.agenda-item.is-past:hover{opacity:1}
+.event-date-badge.is-past{background:var(--editorial-rule);color:var(--text)}
+.agenda-past{margin-top:44px}
+.agenda-past summary{display:flex;align-items:center;gap:10px;padding:14px 0;cursor:pointer;font:400 24px/1.2 'DM Serif Display',Georgia,serif;list-style:none}
+.agenda-past summary::-webkit-details-marker{display:none}
+.agenda-past summary::after{content:'+';margin-left:auto;font:700 22px/1 system-ui,sans-serif;color:var(--editorial-accent)}
+.agenda-past[open] summary::after{content:'–'}
+.agenda-past summary span{padding:2px 9px;border-radius:999px;border:1px solid var(--editorial-rule);font:800 12px/1.4 system-ui,sans-serif;color:var(--muted)}
+.event-hero-main{display:grid;gap:16px;min-width:0}
+.event-hero-main>.event-countdown{justify-self:start}
+.event-calendar-actions{display:flex;flex-wrap:wrap;gap:10px}
+.event-ics-btn{display:inline-flex;align-items:center;gap:8px;padding:11px 15px;border-radius:6px;border:1px solid var(--editorial-accent);color:var(--editorial-accent);font-size:12px;font-weight:800;transition:background .2s}
+.event-ics-btn:hover{background:color-mix(in srgb,var(--editorial-accent) 12%,transparent)}
+.event-past-note{margin:0;color:var(--muted);font-size:14px}
+.event-hero-card.is-past{background:transparent}

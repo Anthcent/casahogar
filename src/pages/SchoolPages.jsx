@@ -1,4 +1,5 @@
-import { ArrowLeft, ArrowRight, CalendarDays, Clock3, ExternalLink, MapPin, UserRound } from 'lucide-react';
+import { ArrowLeft, ArrowRight, CalendarDays, CalendarPlus, Clock3, Download, ExternalLink, MapPin, UserRound } from 'lucide-react';
+import { canAddToCalendar, downloadIcs, eventDisplay, googleCalendarUrl, isThisWeek, relativeLabel, splitEvents } from '../lib/eventDates.js';
 import { useSiteContent } from '../lib/cmsStore.js';
 import { EditorialPhoto, PageIntro, toParagraphs } from './EditorialPages.jsx';
 
@@ -22,65 +23,100 @@ function Pager({ items, index, href, label }) {
   </nav>;
 }
 
-function DateBadge({ event, large = false }) {
-  return <span className={`event-date-badge ${large ? 'event-date-badge-lg' : ''}`} aria-hidden="true">
-    {event.day ? <><strong>{event.day}</strong><small>{event.month}</small></> : <CalendarDays size={large ? 30 : 22} />}
+function DateBadge({ event, large = false, past = false }) {
+  const show = eventDisplay(event);
+  return <span className={`event-date-badge ${large ? 'event-date-badge-lg' : ''} ${past ? 'is-past' : ''}`} aria-hidden="true">
+    {show.day ? <><strong>{show.day}</strong><small>{show.month}</small></> : <CalendarDays size={large ? 30 : 22} />}
   </span>;
 }
 
 function eventWhen(event) {
-  return [event.day && event.month ? `${event.day} ${event.month}` : null, event.time].filter(Boolean).join(' · ') || 'Fecha por confirmar';
+  const show = eventDisplay(event);
+  return [show.day && show.month ? `${show.day} ${show.month}${show.year ? ` ${show.year}` : ''}` : null, show.time].filter(Boolean).join(' · ') || 'Fecha por confirmar';
+}
+
+function Countdown({ event }) {
+  const label = relativeLabel(event);
+  if (!label) return null;
+  const tone = label === 'Realizado' ? 'is-past' : label === 'Hoy' || label === 'Mañana' ? 'is-soon' : '';
+  return <span className={`event-countdown ${tone}`}>{label}</span>;
+}
+
+function AgendaRow({ event, past = false }) {
+  const show = eventDisplay(event);
+  return <li>
+    <a className={`agenda-item ${past ? 'is-past' : ''}`} href={eventHref(event.id)}>
+      <DateBadge event={event} past={past} />
+      <span className="agenda-item-copy">
+        <span className="agenda-item-tags">
+          {!past && isThisWeek(event) && <span className="agenda-week">Esta semana</span>}
+          <Countdown event={event} />
+        </span>
+        <strong>{event.title}</strong>
+        <small>{[show.time, event.place].filter(Boolean).join(' · ') || 'Detalles por confirmar'}</small>
+        {event.description && !past && <span>{event.description}</span>}
+      </span>
+      <ArrowRight size={18} className="agenda-item-arrow" />
+    </a>
+  </li>;
 }
 
 export function AgendaPage({ id = null }) {
   const { content } = useSiteContent();
   const events = (content.events || []).filter(event => event.id);
+  const { upcoming, past } = splitEvents(events);
 
   if (id === null) {
     return <main className="editorial-page" id="contenido"><div className="page-shell">
       <PageIntro eyebrow="AGENDA ESCOLAR" title="Próximas fechas del liceo" description="Celebraciones, encuentros con familias y actividades de nuestra comunidad educativa." />
-      <div className="editorial-section-title"><h2>Calendario</h2><span>{events.length} {events.length === 1 ? 'actividad' : 'actividades'}</span></div>
-      {events.length ? <ol className="agenda-list">{events.map(event => <li key={event.id}>
-        <a className="agenda-item" href={eventHref(event.id)}>
-          <DateBadge event={event} />
-          <span className="agenda-item-copy">
-            <strong>{event.title}</strong>
-            <small>{[event.time, event.place].filter(Boolean).join(' · ') || 'Detalles por confirmar'}</small>
-            {event.description && <span>{event.description}</span>}
-          </span>
-          <ArrowRight size={18} className="agenda-item-arrow" />
-        </a>
-      </li>)}</ol> : <div className="editorial-empty"><h2>Sin actividades publicadas</h2><p>Pronto compartiremos las próximas fechas del liceo.</p></div>}
+      <div className="editorial-section-title"><h2>Próximas actividades</h2><span>{upcoming.length} {upcoming.length === 1 ? 'actividad' : 'actividades'}</span></div>
+      {upcoming.length ? <ol className="agenda-list">{upcoming.map(event => <AgendaRow key={event.id} event={event} />)}</ol>
+        : <div className="editorial-empty"><h2>Sin actividades próximas</h2><p>Pronto compartiremos las próximas fechas del liceo.</p></div>}
+      {past.length > 0 && <details className="agenda-past">
+        <summary>Ya realizados <span>{past.length}</span></summary>
+        <ol className="agenda-list">{past.map(event => <AgendaRow key={event.id} event={event} past />)}</ol>
+      </details>}
     </div></main>;
   }
 
-  const index = events.findIndex(event => event.id === id);
-  const event = events[index];
+  const ordered = [...upcoming, ...past];
+  const index = ordered.findIndex(event => event.id === id);
+  const event = ordered[index];
   if (!event) return <NotFound back="#/agenda" backLabel="Volver a la agenda" eyebrow="AGENDA ESCOLAR" title="No encontramos esta actividad" cta="Ver la agenda" />;
 
   const body = toParagraphs(event.body);
-  const others = events.filter(other => other.id !== event.id).slice(0, 4);
+  const others = upcoming.filter(other => other.id !== event.id).slice(0, 4);
+  const isPast = past.includes(event);
+  const show = eventDisplay(event);
 
   return <main className="editorial-page" id="contenido"><div className="page-shell">
     <PageIntro back="#/agenda" backLabel="Volver a la agenda" eyebrow="AGENDA ESCOLAR" title={event.title} description={event.description} />
     <div className="article-layout">
       <article className="article-body">
-        <div className="event-hero-card">
-          <DateBadge event={event} large />
-          <dl className="event-facts">
-            <div><dt><CalendarDays size={16} /> Fecha</dt><dd>{eventWhen(event)}</dd></div>
-            <div><dt><MapPin size={16} /> Lugar</dt><dd>{event.place || 'Por confirmar'}</dd></div>
-            {event.time && <div><dt><Clock3 size={16} /> Hora</dt><dd>{event.time}</dd></div>}
-          </dl>
+        <div className={`event-hero-card ${isPast ? 'is-past' : ''}`}>
+          <DateBadge event={event} large past={isPast} />
+          <div className="event-hero-main">
+            <Countdown event={event} />
+            <dl className="event-facts">
+              <div><dt><CalendarDays size={16} /> Fecha</dt><dd>{eventWhen(event)}</dd></div>
+              <div><dt><MapPin size={16} /> Lugar</dt><dd>{event.place || 'Por confirmar'}</dd></div>
+              {show.time && <div><dt><Clock3 size={16} /> Hora</dt><dd>{show.time}</dd></div>}
+            </dl>
+            {!isPast && canAddToCalendar(event) && <div className="event-calendar-actions">
+              <a className="editorial-cta" href={googleCalendarUrl(event)} target="_blank" rel="noreferrer"><CalendarPlus size={16} /> Google Calendar</a>
+              <button type="button" className="event-ics-btn" onClick={() => downloadIcs(event)}><Download size={16} /> Agregar a mi calendario</button>
+            </div>}
+            {isPast && <p className="event-past-note">Esta actividad ya se realizó.</p>}
+          </div>
         </div>
         <div className="article-prose">
           {body.length > 0 && <p className="article-lead">{body[0]}</p>}
           {body.slice(1).map((paragraph, idx) => <p key={idx}>{paragraph}</p>)}
           <p className="article-note">Los detalles pueden cambiar; confirma por los canales oficiales del liceo.</p>
         </div>
-        <Pager items={events} index={index} href={eventHref} label="Otras actividades" />
+        <Pager items={ordered} index={index} href={eventHref} label="Otras actividades" />
       </article>
-      <aside className="article-aside" aria-label="Más actividades"><h2>También en agenda</h2>{others.map(other => <a href={eventHref(other.id)} key={other.id}><span>{eventWhen(other)}</span><strong>{other.title}</strong><ArrowRight size={16} /></a>)}<a className="aside-all" href="#/agenda">Toda la agenda <ArrowRight size={16} /></a></aside>
+      <aside className="article-aside" aria-label="Más actividades"><h2>Próximamente</h2>{others.map(other => <a href={eventHref(other.id)} key={other.id}><span>{eventWhen(other)}</span><strong>{other.title}</strong><ArrowRight size={16} /></a>)}<a className="aside-all" href="#/agenda">Toda la agenda <ArrowRight size={16} /></a></aside>
     </div>
   </div></main>;
 }

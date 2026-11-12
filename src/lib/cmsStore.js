@@ -58,6 +58,8 @@ export function createDefaultSiteContent() {
     }),
     events: events.map((e, idx) => ({
       id: `event-${idx + 1}`,
+      date: e.date || '',
+      startTime: e.startTime || '',
       day: e.day,
       month: e.month,
       title: e.title,

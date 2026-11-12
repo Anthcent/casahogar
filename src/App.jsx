@@ -14,6 +14,7 @@ import { AgendaPage, ReadingsPage } from './pages/SchoolPages.jsx';
 const AdminPage = lazy(() => import('./pages/AdminPage.jsx').then(module => ({ default: module.AdminPage })));
 import { parseRoute } from './routes.js';
 import { useBookmarks, toggleBookmark } from './lib/bookmarks.js';
+import { eventDisplay, relativeLabel, splitEvents } from './lib/eventDates.js';
 import { useSiteContent, subscribeNewsletter, filters, resolveAssetUrl } from './lib/cmsStore.js';
 
 const icons = {
@@ -339,24 +340,46 @@ function FeatureCard({ article, onArticle, variant = 'large', related = false })
 }
 
 function Events({ events, onEvent }) {
+  const { upcoming } = splitEvents(events);
+  const [next, ...rest] = upcoming;
+  const nextLabel = next ? relativeLabel(next) : '';
+  const row = (e, idx) => {
+    const show = eventDisplay(e);
+    return (
+      <button key={e.id || idx} className="event-row" onClick={() => onEvent(e)}>
+        <span className="date-square">
+          {show.day ? <>{show.day}{show.month && <small>{show.month}</small>}</> : <CalendarDays size={20} />}
+        </span>
+        <span className="event-info">
+          <strong>{e.title}</strong>
+          <span>{[e.place, show.time].filter(Boolean).join(' · ') || 'Fecha y lugar por confirmar'}</span>
+        </span>
+        <ChevronRight size={16} />
+      </button>
+    );
+  };
+
   return (
     <div className="events-card">
       <div className="events-heading">
         <span><CalendarDays size={17} /> Agenda escolar</span>
         <button onClick={() => onEvent(null)}>Ver agenda <ArrowRight size={13} /></button>
       </div>
-      {events.map((e, idx) => (
-        <button key={e.id || idx} className="event-row" onClick={() => onEvent(e)}>
-          <span className="date-square">
-            {e.day ? <>{e.day}{e.month && <small>{e.month}</small>}</> : <CalendarDays size={20} />}
-          </span>
-          <span className="event-info">
-            <strong>{e.title}</strong>
-            <span>{[e.place, e.time].filter(Boolean).join(' · ') || 'Fecha y lugar por confirmar'}</span>
-          </span>
-          <ChevronRight size={16} />
-        </button>
-      ))}
+      {next ? (
+        <>
+          <button className="event-next" onClick={() => onEvent(next)}>
+            <span className="event-next-top">
+              <small>Próxima actividad</small>
+              {nextLabel && <em className={nextLabel === 'Hoy' || nextLabel === 'Mañana' ? 'is-soon' : ''}>{nextLabel}</em>}
+            </span>
+            <strong>{next.title}</strong>
+            <span>{[eventDisplay(next).day && `${eventDisplay(next).day} ${eventDisplay(next).month}`, eventDisplay(next).time, next.place].filter(Boolean).join(' · ')}</span>
+          </button>
+          {rest.slice(0, 2).map(row)}
+        </>
+      ) : (
+        <p className="events-empty">No hay actividades próximas. <button onClick={() => onEvent(null)}>Ver agenda completa</button></p>
+      )}
     </div>
   );
 }

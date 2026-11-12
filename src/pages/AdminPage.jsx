@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import '../styles/admin.css';
+import { eventDisplay, formatClock } from '../lib/eventDates.js';
 import {
   ArrowLeft, ArrowUp, ArrowDown, Plus, Trash2, Save, LogOut, Upload,
   Cloud, Newspaper, Sparkles, CalendarDays, Headphones,
@@ -997,6 +998,8 @@ export function AdminPage() {
                     onClick={() => updateDraft((d) => {
                       d.events.push({
                         id: `evt-${Date.now()}`,
+                        date: '',
+                        startTime: '',
                         day: '15',
                         month: 'NOV.',
                         title: 'Nueva actividad escolar',
@@ -1042,6 +1045,36 @@ export function AdminPage() {
                       </div>
                     </div>
                     <div className="admin-form-stack">
+                      <div className="admin-grid-2">
+                        <div className="admin-field">
+                          <label>Fecha del evento</label>
+                          <input
+                            type="date"
+                            value={ev.date || ''}
+                            onChange={(e) => updateDraft((d) => {
+                              const ev2 = d.events[idx];
+                              ev2.date = e.target.value;
+                              const shown = eventDisplay(ev2);
+                              if (ev2.date) { ev2.day = shown.day; ev2.month = shown.month; }
+                              return d;
+                            })}
+                          />
+                        </div>
+                        <div className="admin-field">
+                          <label>Hora de inicio</label>
+                          <input
+                            type="time"
+                            value={ev.startTime || ''}
+                            onChange={(e) => updateDraft((d) => {
+                              const ev2 = d.events[idx];
+                              ev2.startTime = e.target.value;
+                              if (ev2.startTime) ev2.time = formatClock(ev2.startTime);
+                              return d;
+                            })}
+                          />
+                        </div>
+                      </div>
+                      <p className="admin-hint">Con fecha real el evento se ordena solo, muestra la cuenta regresiva, se puede agregar al calendario y pasa a "Ya realizados" cuando termina. Los campos de abajo se completan solos.</p>
                       <div className="admin-grid-3">
                         <div className="admin-field">
                           <label>Día (ej. 15)</label>

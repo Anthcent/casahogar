@@ -98,9 +98,9 @@ export const articles = [
 ];
 
 export const events = [
-  { day: '04', month: 'OCT.', title: 'Fiesta de San Francisco de Asís', place: 'Patio central', time: '8:00 a. m.' },
-  { day: '15', month: 'NOV.', title: 'Semana Aniversaria de Casa Hogar', place: 'Auditorio', time: '9:00 a. m.' },
-  { day: '08', month: 'DIC.', title: 'Encuentro navideño familiar', place: 'Canchas del colegio', time: '10:00 a. m.' },
+  { date: '2026-10-04', startTime: '08:00', day: '04', month: 'OCT.', title: 'Fiesta de San Francisco de Asís', place: 'Patio central', time: '8:00 a. m.' },
+  { date: '2026-11-15', startTime: '09:00', day: '15', month: 'NOV.', title: 'Semana Aniversaria de Casa Hogar', place: 'Auditorio', time: '9:00 a. m.' },
+  { date: '2026-12-08', startTime: '10:00', day: '08', month: 'DIC.', title: 'Encuentro navideño familiar', place: 'Canchas del colegio', time: '10:00 a. m.' },
 ];
 
 export const podcasts = [
