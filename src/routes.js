@@ -1,3 +1,10 @@
+// Sections with a list page (#/slug) and detail pages (#/slug/<id>).
+const SECTIONS = [
+  ['vida-escolar', 'campus'],
+  ['agenda', 'agenda'],
+  ['lecturas', 'readings'],
+];
+
 export function parseRoute(hash) {
   if (hash === '#/admin' || hash.startsWith('#/admin/')) {
     return { type: 'admin' };
@@ -5,12 +12,13 @@ export function parseRoute(hash) {
 
   if (hash === '#/blog') return { type: 'blog' };
 
-  const campus = hash.match(/^#\/vida-escolar(?:\/([^/?#]+))?$/);
-  if (campus) {
+  for (const [slug, type] of SECTIONS) {
+    const match = hash.match(new RegExp(`^#/${slug}(?:/([^/?#]+))?$`));
+    if (!match) continue;
     try {
-      return { type: 'campus', id: campus[1] === undefined ? null : decodeURIComponent(campus[1]) };
+      return { type, id: match[1] === undefined ? null : decodeURIComponent(match[1]) };
     } catch {
-      return { type: 'campus', id: null };
+      return { type, id: null };
     }
   }
 

@@ -1086,11 +1086,19 @@ export function AdminPage() {
                         </div>
                       </div>
                       <div className="admin-field">
-                        <label>Descripción al abrir el evento</label>
+                        <label>Resumen del evento</label>
                         <textarea
                           rows={2}
                           value={ev.description || ''}
                           onChange={(e) => updateDraft((d) => { d.events[idx].description = e.target.value; return d; })}
+                        />
+                      </div>
+                      <div className="admin-field">
+                        <label>Detalles del evento (separa párrafos con una línea en blanco)</label>
+                        <textarea
+                          rows={5}
+                          value={ev.body || ''}
+                          onChange={(e) => updateDraft((d) => { d.events[idx].body = e.target.value; return d; })}
                         />
                       </div>
                     </div>
@@ -1579,6 +1587,14 @@ export function AdminPage() {
                             rows={2}
                             value={book.synopsis || ''}
                             onChange={(e) => updateDraft((d) => { d.readings[idx].synopsis = e.target.value; return d; })}
+                          />
+                        </div>
+                        <div className="admin-field">
+                          <label>Reseña completa (separa párrafos con una línea en blanco)</label>
+                          <textarea
+                            rows={5}
+                            value={book.body || ''}
+                            onChange={(e) => updateDraft((d) => { d.readings[idx].body = e.target.value; return d; })}
                           />
                         </div>
                         <div className="admin-field">

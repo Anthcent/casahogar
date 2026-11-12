@@ -75,7 +75,7 @@ function buildMediaItems(content) {
     description: reading.synopsis,
     imageUrl: reading.imageUrl,
     alt: reading.imageAlt,
-    href: reading.externalUrl || undefined,
+    href: reading.id ? `#/lecturas/${encodeURIComponent(reading.id)}` : reading.externalUrl || undefined,
   }));
 
   return items;

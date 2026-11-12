@@ -9,6 +9,7 @@ import {
 import { IMAGE_ALTS } from './data/content.js';
 import { BlogPage, ArticlePage, CampusPage } from './pages/EditorialPages.jsx';
 import { GalleryPage } from './pages/MediaGallery.jsx';
+import { AgendaPage, ReadingsPage } from './pages/SchoolPages.jsx';
 import { AdminPage } from './pages/AdminPage.jsx';
 import { parseRoute } from './routes.js';
 import { useSiteContent, subscribeNewsletter, filters, resolveAssetUrl } from './lib/cmsStore.js';
@@ -309,7 +310,7 @@ function Events({ events, onEvent }) {
     <div className="events-card">
       <div className="events-heading">
         <span><CalendarDays size={17} /> Agenda escolar</span>
-        {events[0] && <button onClick={() => onEvent(events[0])}>Ver agenda <ArrowRight size={13} /></button>}
+        <button onClick={() => onEvent(null)}>Ver agenda <ArrowRight size={13} /></button>
       </div>
       {events.map((e, idx) => (
         <button key={e.id || idx} className="event-row" onClick={() => onEvent(e)}>
@@ -501,7 +502,7 @@ function Gallery({ gallery, campus, onGallery }) {
 function Readings({ readings, onReading }) {
   return (
     <section className="readings-section" id="lecturas">
-      <SectionHeading icon={BookOpen} title="Lecturas recomendadas" onClick={() => readings[0] && onReading(readings[0])} />
+      <SectionHeading icon={BookOpen} title="Lecturas recomendadas" onClick={() => onReading(null)} />
       <div className="reading-grid">
         {readings.map((r, i) => (
           <button className="reading-card" key={r.id || i} onClick={() => onReading(r)}>
@@ -634,31 +635,6 @@ function SchoolModal({ modal, onClose }) {
             )}
           </>
         )}
-
-        {type === 'event' && (
-          <>
-            <Eyebrow>AGENDA ESCOLAR</Eyebrow>
-            <h2>{item.title}</h2>
-            <p><CalendarDays size={16} style={{ verticalAlign: 'middle' }} /> {[item.day && item.month ? `${item.day} ${item.month}` : null, item.time].filter(Boolean).join(' · ') || 'Por confirmar'}</p>
-            <p><Globe2 size={16} style={{ verticalAlign: 'middle' }} /> {item.place || 'Lugar por confirmar'}</p>
-            {item.description && <p className="modal-disclaimer">{item.description}</p>}
-          </>
-        )}
-
-        {type === 'reading' && (
-          <>
-            <Eyebrow>{item.category}</Eyebrow>
-            <h2>{item.name}</h2>
-            {item.author && <p className="modal-meta">Autoría: {item.author}</p>}
-            {resolveAssetUrl(item.imageUrl) && <Slot className="modal-slot modal-book" src={item.imageUrl} />}
-            <p>{item.synopsis || 'Recomendación de lectura para estudiantes y familias.'}</p>
-            {item.externalUrl && (
-              <a className="primary-btn" href={item.externalUrl} target="_blank" rel="noreferrer">
-                Consultar lectura <ExternalLink size={14} />
-              </a>
-            )}
-          </>
-        )}
       </div>
     </div>
   );
@@ -717,6 +693,10 @@ function App() {
           ? 'Galería — Casa Hogar'
           : route.type === 'campus'
             ? 'Vida escolar — Casa Hogar'
+            : route.type === 'agenda'
+              ? 'Agenda escolar — Casa Hogar'
+              : route.type === 'readings'
+                ? 'Lecturas recomendadas — Casa Hogar'
             : route.type === 'admin'
             ? 'Administración — Casa Hogar'
             : 'Casa Hogar — Vida escolar y comunidad';
@@ -737,8 +717,8 @@ function App() {
     else setModal({ type: 'article', item });
   };
   const openVideo = (item) => setModal({ type: 'video', item });
-  const openEvent = (item) => setModal({ type: 'event', item });
-  const openReading = (item) => setModal({ type: 'reading', item });
+  const openEvent = (item) => { window.location.hash = item?.id ? `#/agenda/${encodeURIComponent(item.id)}` : '#/agenda'; };
+  const openReading = (item) => { window.location.hash = item?.id ? `#/lecturas/${encodeURIComponent(item.id)}` : '#/lecturas'; };
   const openCampus = (id) => { window.location.hash = id ? `#/vida-escolar/${encodeURIComponent(id)}` : '#/vida-escolar'; };
   const openGallery = (i) => { window.location.hash = i === undefined ? '#/galeria' : `#/galeria/${i}`; };
   const toggleBookmark = (id) => setBookmarks(old => old.includes(id) ? old.filter(x => x !== id) : [...old, id]);
@@ -805,6 +785,8 @@ function App() {
       {route.type === 'blog' && <BlogPage />}
       {route.type === 'article' && <ArticlePage id={route.id} />}
       {route.type === 'campus' && <CampusPage id={route.id} />}
+      {route.type === 'agenda' && <AgendaPage id={route.id} />}
+      {route.type === 'readings' && <ReadingsPage id={route.id} />}
       {route.type === 'gallery' && <GalleryPage initialIndex={route.index} />}
       {route.type === 'admin' && <AdminPage />}
 

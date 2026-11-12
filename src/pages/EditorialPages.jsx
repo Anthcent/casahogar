@@ -6,14 +6,14 @@ import { useSiteContent, filters, resolveAssetUrl } from '../lib/cmsStore.js';
 
 const topics = filters.filter(({ id }) => id !== 'media');
 
-function EditorialPhoto({ src, alt = '', className = '' }) {
+export function EditorialPhoto({ src, alt = '', className = '' }) {
   const resolved = resolveAssetUrl(src);
   return <div className={`editorial-photo ${className}`}>
     {resolved && <img src={resolved} alt={alt || IMAGE_ALTS[src] || ''} loading="lazy" onError={event => { event.currentTarget.style.display = 'none'; }} />}
   </div>;
 }
 
-function PageIntro({ back = '#inicio', backLabel = 'Volver al inicio', eyebrow, title, description }) {
+export function PageIntro({ back = '#inicio', backLabel = 'Volver al inicio', eyebrow, title, description }) {
   return <div className="page-intro">
     <a className="editorial-back" href={back}><ArrowLeft size={16} />{backLabel}</a>
     <span className="page-intro-label">{eyebrow}</span>
@@ -91,7 +91,7 @@ export function ArticlePage({ id }) {
   </div></main>;
 }
 
-const toParagraphs = text => String(text || '').split(/\n\s*\n/).map(p => p.trim()).filter(Boolean);
+export const toParagraphs = text => String(text || '').split(/\n\s*\n/).map(p => p.trim()).filter(Boolean);
 const campusHref = id => `#/vida-escolar/${encodeURIComponent(id)}`;
 
 function CampusExperienceCard({ item }) {
