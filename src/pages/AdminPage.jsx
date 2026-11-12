@@ -1430,6 +1430,20 @@ export function AdminPage() {
                   </button>
                 </div>
 
+                <div className="admin-item-card">
+                  <div className="admin-item-top">
+                    <span className="admin-item-badge">Banner de la página Multimedia</span>
+                  </div>
+                  <div className="admin-form-stack">
+                    <ImageField
+                      label="Imagen de fondo del banner"
+                      hint="Si la dejas vacía se usa la primera fotografía de la galería."
+                      value={draft.galleryMeta?.heroImageUrl || ''}
+                      folder="galeria"
+                      onChange={(url) => updateDraft((d) => { d.galleryMeta = { ...(d.galleryMeta || {}), heroImageUrl: url }; return d; })}
+                    />
+                  </div>
+                </div>
                 <datalist id="admin-gallery-albums">
                   {[...new Set(draft.gallery.map((p) => (p.album || '').trim()).filter(Boolean))].map((name) => <option key={name} value={name} />)}
                 </datalist>

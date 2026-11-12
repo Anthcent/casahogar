@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ArrowLeft, ArrowRight, ChevronLeft, ChevronRight, ExternalLink, Film, Images, LayoutGrid, Play, Search, X } from 'lucide-react';
 import { useSiteContent, resolveAssetUrl } from '../lib/cmsStore.js';
 import '../styles/gallery.css';
@@ -62,7 +62,7 @@ function buildMediaItems(content) {
     album: 'Voces del liceo',
     title: pod.title,
     description: pod.description,
-    imageUrl: pod.imageUrl || content.podcastMeta?.imageUrl || '',
+    imageUrl: pod.imageUrl || content.podcastMeta?.posterUrl || '',
     mediaUrl: String(pod.mediaUrl || '').trim(),
     meta: pod.time,
   }));
@@ -96,6 +96,46 @@ function AlbumCover({ album, active, onSelect }) {
     </span>
     <span className="album-label"><strong>{album.name}</strong><small>{album.items.length} {album.items.length === 1 ? 'elemento' : 'elementos'}</small></span>
   </button>;
+}
+
+/** Horizontal carousel that keeps the album shelf look and adds arrows when it overflows. */
+function AlbumCarousel({ children }) {
+  const trackRef = useRef(null);
+  const [edges, setEdges] = useState({ start: true, end: true });
+
+  const update = useCallback(() => {
+    const track = trackRef.current;
+    if (!track) return;
+    const max = track.scrollWidth - track.clientWidth;
+    setEdges({ start: track.scrollLeft <= 2, end: track.scrollLeft >= max - 2 });
+  }, []);
+
+  useEffect(() => {
+    const track = trackRef.current;
+    if (!track) return undefined;
+    update();
+    track.addEventListener('scroll', update, { passive: true });
+    const observer = typeof ResizeObserver === 'function' ? new ResizeObserver(update) : null;
+    observer?.observe(track);
+    window.addEventListener('resize', update);
+    return () => {
+      track.removeEventListener('scroll', update);
+      observer?.disconnect();
+      window.removeEventListener('resize', update);
+    };
+  }, [update]);
+
+  const scroll = direction => {
+    const track = trackRef.current;
+    if (track) track.scrollBy({ left: direction * track.clientWidth * 0.8, behavior: 'smooth' });
+  };
+
+  const overflow = !(edges.start && edges.end);
+  return <div className={`album-carousel ${overflow ? 'has-overflow' : ''} ${edges.start ? 'at-start' : ''} ${edges.end ? 'at-end' : ''}`}>
+    {overflow && <button type="button" className="album-carousel-btn prev" onClick={() => scroll(-1)} disabled={edges.start} aria-label="Álbumes anteriores"><ChevronLeft size={20} /></button>}
+    <section className="album-shelf" aria-label="Álbumes" ref={trackRef}>{children}</section>
+    {overflow && <button type="button" className="album-carousel-btn next" onClick={() => scroll(1)} disabled={edges.end} aria-label="Más álbumes"><ChevronRight size={20} /></button>}
+  </div>;
 }
 
 function MediaViewer({ items, index, onMove, onClose }) {
@@ -198,9 +238,11 @@ export function GalleryPage({ initialIndex = null }) {
   const photoCount = items.filter(item => item.type === 'photo').length;
   const videoCount = items.length - photoCount;
   const currentAlbum = album === 'all' ? 'Todos los álbumes' : album;
+  const heroImage = resolveAssetUrl(content.galleryMeta?.heroImageUrl || content.gallery?.[0]?.imageUrl || '');
 
   return <main className="editorial-page media-page" id="contenido">
-    <section className="media-hero">
+    <section className={`media-hero ${heroImage ? 'has-image' : ''}`}>
+      {heroImage && <img className="media-hero-bg" src={heroImage} alt="" aria-hidden="true" />}
       <div className="page-shell">
         <a className="editorial-back" href="#inicio"><ArrowLeft size={16} />Volver al inicio</a>
         <span className="page-intro-label">MULTIMEDIA</span>
@@ -215,10 +257,10 @@ export function GalleryPage({ initialIndex = null }) {
     </section>
 
     <div className="page-shell">
-      <section className="album-shelf" aria-label="Álbumes">
+      <AlbumCarousel>
         <AlbumCover album={{ name: 'Todos', items }} active={album === 'all'} onSelect={() => setAlbum('all')} />
         {albums.map(item => <AlbumCover key={item.name} album={item} active={album === item.name} onSelect={() => setAlbum(album === item.name ? 'all' : item.name)} />)}
-      </section>
+      </AlbumCarousel>
 
       <div className="media-toolbar">
         <div className="media-types" role="group" aria-label="Tipo de contenido">

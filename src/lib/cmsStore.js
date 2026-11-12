@@ -100,6 +100,10 @@ export function createDefaultSiteContent() {
         excerpt: 'Una mirada a las experiencias de nuestra comunidad educativa.',
       })),
     },
+    galleryMeta: {
+      heroImageUrl: '',
+      heroImageAlt: '',
+    },
     gallery: ['gallery1', 'gallery2', 'gallery3', 'gallery4', 'gallery5'].map((key, idx) => ({
       id: `gal-${idx + 1}`,
       imageUrl: ASSETS[key],
@@ -148,6 +152,7 @@ export function normalizeSiteContent(raw) {
       ...(raw.campus || {}),
       links: Array.isArray(raw.campus?.links) ? raw.campus.links : base.campus.links,
     },
+    galleryMeta: { ...base.galleryMeta, ...(raw.galleryMeta || {}) },
     gallery: Array.isArray(raw.gallery) && raw.gallery.length ? raw.gallery : base.gallery,
     readings: Array.isArray(raw.readings) ? raw.readings : base.readings,
     footer: { ...base.footer, ...(raw.footer || {}) },

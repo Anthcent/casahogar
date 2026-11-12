@@ -91,3 +91,28 @@
   .media-tile{animation:none}
   .media-tile .media-image,.album-sheet,.media-tile-caption,.media-play{transition:none}
 }
+
+/* Hero background image */
+.media-hero.has-image{background:#0b1117;color:#fff;padding:clamp(56px,9vw,110px) 0 clamp(48px,7vw,84px);border-bottom:0;--editorial-accent:#cfe9a6}
+.media-hero-bg{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;transform:scale(1.04);animation:media-hero-zoom 18s ease-out both}
+.media-hero.has-image::after{content:'';position:absolute;inset:0;background:linear-gradient(90deg,rgba(6,16,14,.9) 0%,rgba(6,16,14,.7) 45%,rgba(6,16,14,.25) 100%),linear-gradient(0deg,rgba(6,16,14,.6),transparent 45%)}
+.media-hero.has-image>.page-shell{position:relative;z-index:1}
+.media-hero.has-image p,.media-hero.has-image .editorial-back{color:#e3ece8}
+.media-hero.has-image .media-stats li{color:#e3ece8;border-color:rgba(255,255,255,.3);background:rgba(255,255,255,.08);backdrop-filter:blur(6px)}
+.media-hero.has-image .media-stats strong{color:#fff}
+@keyframes media-hero-zoom{from{transform:scale(1.12)}to{transform:scale(1.04)}}
+
+/* Album carousel */
+.album-carousel{position:relative}
+.album-shelf{scrollbar-width:none;scroll-behavior:smooth}
+.album-shelf::-webkit-scrollbar{display:none}
+.album-carousel.has-overflow:not(.at-end) .album-shelf{mask-image:linear-gradient(90deg,#000 85%,transparent)}
+.album-carousel.has-overflow:not(.at-start) .album-shelf{mask-image:linear-gradient(90deg,transparent,#000 15%)}
+.album-carousel.has-overflow:not(.at-start):not(.at-end) .album-shelf{mask-image:linear-gradient(90deg,transparent,#000 12%,#000 88%,transparent)}
+.album-carousel-btn{position:absolute;top:70px;z-index:5;display:grid;place-items:center;width:42px;height:42px;margin-top:-21px;border-radius:50%;border:1px solid var(--editorial-rule);background:var(--panel,var(--bg));color:var(--text);box-shadow:0 8px 20px rgba(0,0,0,.18);transition:opacity .2s,transform .2s}
+.album-carousel-btn:hover:not(:disabled){transform:scale(1.08)}
+.album-carousel-btn:disabled{opacity:0;pointer-events:none}
+.album-carousel-btn.prev{left:-8px}
+.album-carousel-btn.next{right:-8px}
+@media(max-width:650px){.album-carousel-btn{top:58px;width:36px;height:36px;margin-top:-18px}.album-carousel-btn.prev{left:-4px}.album-carousel-btn.next{right:-4px}}
+@media(prefers-reduced-motion:reduce){.media-hero-bg{animation:none}.album-shelf{scroll-behavior:auto}}
