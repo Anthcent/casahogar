@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react';
-import { ArrowLeft, ArrowRight, Search } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Bookmark, Search } from 'lucide-react';
 import { IMAGE_ALTS, topicFromParam, topicSlug } from '../data/content.js';
 import { articleDetails } from '../data/editorial.js';
 import { useSiteContent, filters, resolveAssetUrl } from '../lib/cmsStore.js';
+import { useBookmarks, toggleBookmark } from '../lib/bookmarks.js';
 
 const topics = filters.filter(({ id }) => id !== 'media');
 
@@ -37,7 +38,9 @@ function StoryCard({ article, featured = false }) {
 export function BlogPage({ initialTopic = 'all' }) {
   const { content } = useSiteContent();
   const articles = content.articles;
+  const bookmarks = useBookmarks();
   const validTopic = value => {
+    if (value === 'guardados' || value === 'saved') return 'saved';
     const id = topicFromParam(value);
     return topics.some(item => item.id === id) ? id : 'all';
   };
@@ -46,11 +49,11 @@ export function BlogPage({ initialTopic = 'all' }) {
   // Keep the URL shareable without triggering a route change.
   const setTopic = value => {
     setTopicState(value);
-    history.replaceState(null, '', value === 'all' ? '#/blog' : `#/blog?tema=${topicSlug(value)}`);
+    history.replaceState(null, '', value === 'all' ? '#/blog' : `#/blog?tema=${value === 'saved' ? 'guardados' : topicSlug(value)}`);
   };
   const [query, setQuery] = useState('');
   const visible = articles.filter(article =>
-    (topic === 'all' || article.filter === topic) &&
+    (topic === 'all' || (topic === 'saved' ? bookmarks.includes(article.id) : article.filter === topic)) &&
     `${article.title} ${article.category} ${article.excerpt}`.toLocaleLowerCase('es').includes(query.trim().toLocaleLowerCase('es'))
   );
 
@@ -60,18 +63,21 @@ export function BlogPage({ initialTopic = 'all' }) {
       <div className="blog-toolbar">
         <div className="blog-topics" aria-label="Filtrar historias">{topics.map(item =>
           <button key={item.id} type="button" className={topic === item.id ? 'active' : ''} aria-pressed={topic === item.id} onClick={() => setTopic(item.id)}>{item.label}</button>
-        )}</div>
+        )}
+        {(bookmarks.length > 0 || topic === 'saved') && <button type="button" className={`blog-topic-saved ${topic === 'saved' ? 'active' : ''}`} aria-pressed={topic === 'saved'} onClick={() => setTopic('saved')}><Bookmark size={13} fill="currentColor" /> Guardados ({bookmarks.length})</button>}
+        </div>
         <label className="blog-search"><Search size={17} /><span className="sr-only">Buscar historias</span><input value={query} onChange={event => setQuery(event.target.value)} placeholder="Buscar historias" /></label>
       </div>
-      <div className="editorial-section-title"><h2>{topic === 'all' ? 'Todas las historias' : topics.find(item => item.id === topic)?.label}</h2><span>{visible.length} {visible.length === 1 ? 'historia' : 'historias'}</span></div>
+      <div className="editorial-section-title"><h2>{topic === 'all' ? 'Todas las historias' : topic === 'saved' ? 'Mis guardados' : topics.find(item => item.id === topic)?.label}</h2><span>{visible.length} {visible.length === 1 ? 'historia' : 'historias'}</span></div>
       {visible.length ? <div className="story-grid">{visible.map((article, index) => <StoryCard key={article.id} article={article} featured={index === 0 && topic === 'all' && !query.trim()} />)}</div> :
-        <div className="editorial-empty"><h2>Sin resultados por ahora</h2><p>Prueba con otro término o revisa todas las historias.</p><button type="button" onClick={() => { setTopic('all'); setQuery(''); }}>Ver todas las historias</button></div>}
+        <div className="editorial-empty"><h2>{topic === 'saved' && !query.trim() ? 'Aún no guardas historias' : 'Sin resultados por ahora'}</h2><p>{topic === 'saved' && !query.trim() ? 'Toca el marcador de cualquier historia para encontrarla aquí después.' : 'Prueba con otro término o revisa todas las historias.'}</p><button type="button" onClick={() => { setTopic('all'); setQuery(''); }}>Ver todas las historias</button></div>}
     </div>
   </main>;
 }
 
 export function ArticlePage({ id }) {
   const { content } = useSiteContent();
+  const bookmarks = useBookmarks();
   const articles = content.articles;
   const article = articles.find(item => item.id === id);
   if (!article) return <main className="editorial-page" id="contenido"><div className="page-shell editorial-not-found"><PageIntro back="#/blog" backLabel="Volver al blog" eyebrow="CASA HOGAR" title="No encontramos esta historia" description="Puede que el enlace haya cambiado. Explora el resto de publicaciones del liceo." /><a className="editorial-cta" href="#/blog">Ver todas las historias <ArrowRight size={16} /></a></div></main>;
@@ -79,6 +85,7 @@ export function ArticlePage({ id }) {
   const fallbackDetail = articleDetails[id] || { intro: article.excerpt, sections: [] };
   const intro = article.intro ?? fallbackDetail.intro;
   const sections = Array.isArray(article.sections) ? article.sections : fallbackDetail.sections;
+  const saved = bookmarks.includes(article.id);
   const related = articles.filter(item => item.id !== id && item.filter === article.filter).concat(articles.filter(item => item.id !== id && item.filter !== article.filter)).slice(0, 3);
 
   return <main className="editorial-page" id="contenido"><div className="page-shell">
@@ -89,6 +96,9 @@ export function ArticlePage({ id }) {
           <EditorialPhoto src={article.imageUrl || article.image} alt={article.imageAlt || article.title} />
           {article.caption && <figcaption>{article.caption}</figcaption>}
         </figure>
+        <button type="button" className={`article-save ${saved ? 'saved' : ''}`} aria-pressed={saved} onClick={() => toggleBookmark(article.id)}>
+          <Bookmark size={16} fill={saved ? 'currentColor' : 'none'} /> {saved ? 'Guardado' : 'Guardar artículo'}
+        </button>
         <div className="article-prose">
           {intro && <p className="article-lead">{intro}</p>}
           {sections.map((section, idx) => <section key={`${section.heading}-${idx}`}><h2>{section.heading}</h2>{(section.paragraphs || []).map((paragraph, pIdx) => <p key={pIdx}>{paragraph}</p>)}</section>)}

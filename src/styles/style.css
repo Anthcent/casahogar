@@ -180,3 +180,48 @@ footer{position:relative;background:var(--footer);border-top:1px solid var(--foo
 .admin-toggle{transition:transform .2s ease,background .2s ease}
 .admin-toggle:hover,.admin-toggle:focus-visible{transform:translateY(-1px);background:rgba(255,255,255,.08)}
 .admin-loading{min-height:60vh;display:grid;place-items:center;color:var(--muted)}
+
+/* Hero: slow zoom, word reveal, autoplay progress */
+.hero-image{animation:hero-kenburns 22s ease-in-out infinite alternate;transform-origin:60% 40%}
+@keyframes hero-kenburns{from{transform:scale(1)}to{transform:scale(1.09) translate(-1.2%,-1%)}}
+.hero-slide{animation:none}
+.hero-slide .hero-eyebrow,.hero-slide .hero-description,.hero-slide .hero-buttons{animation:hero-fade-up .7s cubic-bezier(.22,1,.36,1) both}
+.hero-slide .hero-description{animation-delay:.45s}
+.hero-slide .hero-buttons{animation-delay:.6s}
+.hero-word{display:inline-block;font-style:normal;animation:hero-word-in .65s cubic-bezier(.22,1,.36,1) both;animation-delay:calc(.08s + var(--w,0) * .07s)}
+@keyframes hero-word-in{from{opacity:0;transform:translateY(.45em) rotate(2deg);filter:blur(4px)}to{opacity:1;transform:none;filter:none}}
+@keyframes hero-fade-up{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
+.hero-pager button.active:after{background:rgba(255,255,255,.28)}
+.hero-progress{position:absolute;left:0;bottom:-4px;z-index:1;height:2px;width:100%;background:var(--yellow);transform-origin:left;animation:hero-progress var(--hero-ms,6000ms) linear both}
+.hero-paused .hero-progress{animation-play-state:paused}
+@keyframes hero-progress{from{transform:scaleX(0)}to{transform:scaleX(1)}}
+:root[data-theme='light'] .hero-pager button.active:after{background:rgba(16,53,44,.2)}
+:root[data-theme='light'] .hero-progress{background:#e69919}
+
+/* "En el liceo" carousel */
+.post-carousel{position:relative;--post-cols:4;--post-gap:6px}
+.post-track{overflow-x:auto;display:flex;gap:var(--post-gap);scrollbar-width:none;-webkit-mask-image:linear-gradient(90deg,transparent,#000 3%,#000 97%,transparent);mask-image:linear-gradient(90deg,transparent,#000 3%,#000 97%,transparent)}
+.post-track::-webkit-scrollbar{display:none}
+.post-group{display:flex;gap:var(--post-gap);flex-shrink:0}
+.post-carousel{container-type:inline-size}
+.post-group .post-card{flex:0 0 calc((100cqw - (var(--post-cols) - 1) * var(--post-gap)) / var(--post-cols))}
+.post-carousel-btn{position:absolute;top:50%;z-index:3;display:grid;place-items:center;width:32px;height:32px;margin-top:-16px;border-radius:50%;background:var(--panel,#fff);color:var(--text);border:1px solid var(--line);box-shadow:0 6px 16px rgba(0,0,0,.2);opacity:0;transition:opacity .2s,transform .2s}
+.post-carousel:hover .post-carousel-btn,.post-carousel-btn:focus-visible{opacity:1}
+.post-carousel-btn:hover{transform:scale(1.08)}
+.post-carousel-btn.prev{left:4px}
+.post-carousel-btn.next{right:4px}
+@media(hover:none){.post-carousel-btn{opacity:1}}
+@media(max-width:790px){.post-carousel{--post-cols:3}}
+@media(max-width:520px){.post-carousel{--post-cols:2;--post-gap:7px}}
+
+/* Saved articles */
+.post-foot button.saved{color:var(--yellow)}
+.post-foot button:active svg{transform:scale(1.3)}
+.post-foot button svg{transition:transform .15s}
+.saved-link{display:inline-flex;align-items:center;gap:6px;margin-top:10px;padding:6px 12px;border-radius:999px;border:1px solid var(--line);font-size:11px;font-weight:700;color:var(--text);transition:background .2s}
+.saved-link strong{min-width:18px;padding:0 6px;border-radius:999px;background:var(--yellow);color:#141b1c;font-size:10px;text-align:center}
+.saved-link:hover{background:rgba(255,201,21,.12)}
+
+@media(prefers-reduced-motion:reduce){
+  .hero-image,.hero-word,.hero-slide .hero-eyebrow,.hero-slide .hero-description,.hero-slide .hero-buttons{animation:none}
+}

@@ -119,3 +119,9 @@
   .reading-detail{flex-direction:column;align-items:flex-start}
   .reading-book-lg{width:60%}
 }
+
+/* Saved articles */
+.blog-topic-saved{display:inline-flex;align-items:center;gap:6px}
+.article-save{display:inline-flex;align-items:center;gap:8px;margin:-6px 0 26px;padding:9px 16px;border:1px solid var(--editorial-rule);border-radius:999px;font-size:13px;font-weight:800;color:var(--text);transition:background .2s,border-color .2s}
+.article-save:hover{border-color:var(--editorial-accent)}
+.article-save.saved{background:var(--editorial-accent);border-color:var(--editorial-accent);color:var(--bg)}

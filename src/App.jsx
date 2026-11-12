@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, lazy, Suspense } from 'react';
+import React, { useState, useEffect, useMemo, useRef, lazy, Suspense } from 'react';
 import {
   ArrowRight, Search, Menu, X, Sun, Moon, Play, ChevronRight, BookOpen,
   CalendarDays, Clock3, Bookmark, Instagram, Youtube, Facebook, Quote,
@@ -13,6 +13,7 @@ import { AgendaPage, ReadingsPage } from './pages/SchoolPages.jsx';
 // The CMS is only needed on #/admin; keep it out of the public bundle.
 const AdminPage = lazy(() => import('./pages/AdminPage.jsx').then(module => ({ default: module.AdminPage })));
 import { parseRoute } from './routes.js';
+import { useBookmarks, toggleBookmark } from './lib/bookmarks.js';
 import { useSiteContent, subscribeNewsletter, filters, resolveAssetUrl } from './lib/cmsStore.js';
 
 const icons = {
@@ -48,17 +49,26 @@ function renderMultiline(text) {
 function renderHighlightedLines(titleText, highlight) {
   const lines = String(titleText || '').split('\n');
   const hl = String(highlight || '').trim();
+  let order = 0;
+  // Each word gets its own index so CSS can reveal the title word by word.
+  const words = (text, highlighted) => text.split(/(\s+)/).filter(Boolean).map((part, i) => {
+    if (/^\s+$/.test(part)) return part;
+    const word = <i className="hero-word" style={{ '--w': order++ }} key={i}>{part}</i>;
+    return highlighted ? <span key={i}>{word}</span> : word;
+  });
   return lines.map((line, i) => {
-    let content = line;
+    let content;
     if (hl && line.includes(hl)) {
       const idx = line.indexOf(hl);
       content = (
         <>
-          {line.slice(0, idx)}
-          <span>{hl}</span>
-          {line.slice(idx + hl.length)}
+          {words(line.slice(0, idx))}
+          {words(hl, true)}
+          {words(line.slice(idx + hl.length))}
         </>
       );
+    } else {
+      content = words(line);
     }
     return (
       <React.Fragment key={i}>
@@ -205,16 +215,15 @@ function Hero({ hero, onArticle, onVideo }) {
   const heroBgStyle = heroBg ? { backgroundImage: `url('${heroBg}')` } : undefined;
   const [paused, setPaused] = useState(false);
 
-  useEffect(() => {
-    if (paused || slides.length < 2) return undefined;
-    if (window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) return undefined;
-    const timer = setInterval(() => setIdx(i => (i + 1) % slides.length), HERO_AUTOPLAY_MS);
-    return () => clearInterval(timer);
-  }, [paused, slides.length, safeIdx]);
+  const [reducedMotion] = useState(() => Boolean(window.matchMedia?.('(prefers-reduced-motion: reduce)').matches));
+  const autoplay = slides.length > 1 && !reducedMotion;
+  // The progress bar animation drives autoplay, so pausing keeps both in sync.
+  const nextSlide = () => setIdx(i => (i + 1) % slides.length);
 
   return (
     <section
-      className="hero"
+      className={'hero' + (paused ? ' hero-paused' : '')}
+      style={{ '--hero-ms': `${HERO_AUTOPLAY_MS}ms` }}
       aria-label="Historia principal"
       onMouseEnter={() => setPaused(true)}
       onMouseLeave={() => setPaused(false)}
@@ -255,8 +264,9 @@ function Hero({ hero, onArticle, onVideo }) {
       <div className="hero-mark hero-mark-two" aria-hidden="true">〰</div>
       <div className="hero-pager" aria-label="Cambiar historia principal">
         {slides.map((_, i) => (
-          <button key={i} className={safeIdx === i ? 'active' : ''} onClick={() => setIdx(i)} aria-label={'Historia ' + (i + 1)}>
+          <button key={i} className={safeIdx === i ? 'active' : ''} onClick={() => setIdx(i)} aria-label={'Historia ' + (i + 1)} aria-current={safeIdx === i ? 'true' : undefined}>
             {String(i + 1).padStart(2, '0')}
+            {safeIdx === i && autoplay && <span className="hero-progress" key={safeIdx} onAnimationEnd={nextSlide} aria-hidden="true" />}
           </button>
         ))}
         {slides.length > 1 && (
@@ -389,35 +399,121 @@ function Featured({ articles, quote, events, onArticle, onEvent, filter, onBrows
   );
 }
 
-function Latest({ articles, onArticle, bookmarks, onBookmark, onBrowse }) {
-  const cards = articles.slice(3);
+function PostCard({ article: a, index: i, onArticle, saved, onBookmark }) {
+  return (
+    <article className="post-card">
+      <button className="post-image-click" onClick={() => onArticle(a)} aria-label={'Abrir ' + a.title}>
+        <Slot className="post-image" src={a.imageUrl || a.image} alt={a.imageAlt} label={'Imagen pendiente: ' + a.title} />
+      </button>
+      <div className="post-details">
+        <Eyebrow color={i % 4 === 1 || i % 4 === 2 ? 'blue' : 'yellow'}>{a.category}</Eyebrow>
+        <button className="post-title" onClick={() => onArticle(a)}>{a.title}</button>
+        <div className="post-foot">
+          <span>{a.read}</span>
+          <button
+            className={saved ? 'saved' : ''}
+            aria-label={saved ? 'Quitar de guardados' : 'Guardar artículo'}
+            aria-pressed={saved}
+            title={saved ? 'Quitar de guardados' : 'Guardar artículo'}
+            onClick={() => onBookmark(a.id)}
+          >
+            <Bookmark size={15} fill={saved ? 'currentColor' : 'none'} />
+          </button>
+        </div>
+      </div>
+    </article>
+  );
+}
+
+const CAROUSEL_SPEED = 22; // pixels per second
+
+// Distance between the original card group and its clone: one full loop.
+const loopWidth = track => (track.children.length > 1 ? track.children[1].offsetLeft - track.children[0].offsetLeft : track.scrollWidth);
+
+/** Slow, endless auto-scroll that pauses on hover, focus, touch or manual navigation. */
+function useAutoScroll(trackRef, enabled) {
+  const hold = useRef({ hover: false, until: 0 });
+
+  useEffect(() => {
+    const track = trackRef.current;
+    if (!track || !enabled) return undefined;
+    if (window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) return undefined;
+    let frame;
+    let last = performance.now();
+    let carry = 0;
+    const tick = now => {
+      const dt = Math.min(now - last, 64);
+      last = now;
+      const half = loopWidth(track);
+      if (!hold.current.hover && now > hold.current.until && half > track.clientWidth) {
+        carry += (CAROUSEL_SPEED * dt) / 1000;
+        const step = Math.floor(carry);
+        if (step) {
+          carry -= step;
+          track.scrollLeft = track.scrollLeft + step >= half ? track.scrollLeft + step - half : track.scrollLeft + step;
+        }
+      }
+      frame = requestAnimationFrame(tick);
+    };
+    frame = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(frame);
+  }, [trackRef, enabled]);
+
+  return {
+    pause: () => { hold.current.hover = true; },
+    resume: () => { hold.current.hover = false; },
+    holdFor: ms => { hold.current.until = performance.now() + ms; },
+  };
+}
+
+function Latest({ articles, onArticle, bookmarks, onBookmark, onBrowse, onSaved }) {
+  const cards = [...articles.slice(3), ...articles.slice(0, 3)];
+  const trackRef = useRef(null);
+  const loop = cards.length > 2;
+  const auto = useAutoScroll(trackRef, loop);
+
+  const scrollByCard = direction => {
+    const track = trackRef.current;
+    const card = track?.querySelector('.post-card');
+    if (!track || !card) return;
+    auto.holdFor(5000);
+    const half = loopWidth(track);
+    const step = card.getBoundingClientRect().width + parseFloat(getComputedStyle(card.parentElement).columnGap || '0');
+    if (direction < 0 && track.scrollLeft - step < 0) track.scrollLeft += half;
+    if (direction > 0 && track.scrollLeft + step >= half) track.scrollLeft -= half;
+    track.scrollBy({ left: direction * step, behavior: 'smooth' });
+  };
+
+  const renderCards = () => cards.map((a, i) => (
+    <PostCard key={a.id} article={a} index={i} onArticle={onArticle} saved={bookmarks.includes(a.id)} onBookmark={onBookmark} />
+  ));
+
   return (
     <section className="latest-section" id="publicaciones">
       <SectionHeading title="En el liceo" action="Ver historias" onClick={onBrowse} />
-      <div className="post-grid">
-        {cards.map((a, i) => (
-          <article className="post-card" key={a.id}>
-            <button className="post-image-click" onClick={() => onArticle(a)} aria-label={'Abrir ' + a.title}>
-              <Slot className="post-image" src={a.imageUrl || a.image} alt={a.imageAlt} label={'Imagen pendiente: ' + a.title} />
-            </button>
-            <div className="post-details">
-              <Eyebrow color={i === 1 || i === 2 ? 'blue' : 'yellow'}>{a.category}</Eyebrow>
-              <button className="post-title" onClick={() => onArticle(a)}>{a.title}</button>
-              <div className="post-foot">
-                <span>{a.read}</span>
-                <button
-                  className={bookmarks.includes(a.id) ? 'saved' : ''}
-                  aria-label={bookmarks.includes(a.id) ? 'Quitar de guardados' : 'Guardar artículo'}
-                  title="Guardar artículo"
-                  onClick={() => onBookmark(a.id)}
-                >
-                  <Bookmark size={15} fill={bookmarks.includes(a.id) ? 'currentColor' : 'none'} />
-                </button>
-              </div>
-            </div>
-          </article>
-        ))}
+      <div
+        className="post-carousel"
+        onMouseEnter={auto.pause}
+        onMouseLeave={auto.resume}
+        onFocusCapture={auto.pause}
+        onBlurCapture={auto.resume}
+        onTouchStart={() => auto.holdFor(6000)}
+        onWheel={() => auto.holdFor(4000)}
+      >
+        <div className="post-track" ref={trackRef}>
+          <div className="post-group">{renderCards()}</div>
+          {loop && <div className="post-group" aria-hidden="true" inert>{renderCards()}</div>}
+        </div>
+        {loop && <>
+          <button type="button" className="post-carousel-btn prev" onClick={() => scrollByCard(-1)} aria-label="Historias anteriores"><ChevronRight size={16} style={{ transform: 'rotate(180deg)' }} /></button>
+          <button type="button" className="post-carousel-btn next" onClick={() => scrollByCard(1)} aria-label="Más historias"><ChevronRight size={16} /></button>
+        </>}
       </div>
+      {bookmarks.length > 0 && (
+        <button type="button" className="saved-link" onClick={onSaved}>
+          <Bookmark size={14} fill="currentColor" /> Mis guardados <strong>{bookmarks.length}</strong> <ArrowRight size={13} />
+        </button>
+      )}
     </section>
   );
 }
@@ -675,7 +771,7 @@ function App() {
   const [search, setSearch] = useState('');
   const [searchOpen, setSearchOpen] = useState(false);
   const [modal, setModal] = useState(null);
-  const [bookmarks, setBookmarks] = useState([]);
+  const bookmarks = useBookmarks();
   const [subEmail, setSubEmail] = useState('');
   const [subMessage, setSubMessage] = useState('');
   const [route, setRoute] = useState(() => parseRoute(window.location.hash));
@@ -747,7 +843,6 @@ function App() {
   const openReading = (item) => { window.location.hash = item?.id ? `#/lecturas/${encodeURIComponent(item.id)}` : '#/lecturas'; };
   const openCampus = (id) => { window.location.hash = id ? `#/vida-escolar/${encodeURIComponent(id)}` : '#/vida-escolar'; };
   const openGallery = (i) => { window.location.hash = i === undefined ? '#/galeria' : `#/galeria/${i}`; };
-  const toggleBookmark = (id) => setBookmarks(old => old.includes(id) ? old.filter(x => x !== id) : [...old, id]);
 
   const subscribe = async (e) => {
     e.preventDefault();
@@ -794,6 +889,7 @@ function App() {
                     bookmarks={bookmarks}
                     onBookmark={toggleBookmark}
                     onBrowse={() => { window.location.hash = '#/blog'; }}
+                    onSaved={() => { window.location.hash = '#/blog?tema=guardados'; }}
                   />
                   <Podcasts podcastMeta={content.podcastMeta} podcasts={content.podcasts} onVideo={openVideo} />
                 </div>
